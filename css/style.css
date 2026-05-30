@@ -1391,6 +1391,17 @@ body {
   box-shadow: 0 0 10px rgba(255, 179, 198, 0.35);
 }
 
+/* 侧边栏分组标签 */
+.sidebar-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 1rem 1.2rem 0.3rem;
+  list-style: none;
+}
+
 /* 后台顶栏左侧组合（汉堡+标题） */
 .admin-header-left {
   display: flex;
@@ -1590,12 +1601,14 @@ body {
   .portal-nav-links {
     display: none; /* 移动端精简头部 */
   }
-  
+
   .author-profile-card {
     flex-direction: column;
     text-align: center;
     padding: 2rem 1.5rem;
     gap: 1.5rem;
+    box-shadow: 0 4px 14px 0 rgba(15, 16, 38, 0.18); /* 移动端减小底部阴影扩散 */
+    margin-bottom: 1.25rem;
   }
   .profile-meta {
     justify-content: center;

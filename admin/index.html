@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>后台管理 | 流光星野</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb3c6' stroke-width='2.5'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>">
-  <link rel="stylesheet" href="../css/style.css?v=6">
+  <link rel="stylesheet" href="../css/style.css?v=7">
 </head>
 <body>
 
@@ -55,16 +55,24 @@
 
         <nav aria-label="后台功能导航">
           <ul class="sidebar-menu">
+            <li class="sidebar-group-label">内容管理</li>
             <li>
               <button id="sidebar-websites" class="sidebar-menu-btn active">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                网站管理
+                网站列表
               </button>
             </li>
             <li>
               <button id="sidebar-add-new" class="sidebar-menu-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
                 添加网站
+              </button>
+            </li>
+            <li class="sidebar-group-label">站点配置</li>
+            <li>
+              <button id="sidebar-site-settings" class="sidebar-menu-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                基础设置
               </button>
             </li>
             <li>
@@ -85,10 +93,11 @@
                 修改密码
               </button>
             </li>
+            <li class="sidebar-group-label">工具</li>
             <li>
               <button id="sidebar-export-config" class="sidebar-menu-btn" style="color: var(--color-sakura);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                导出网站数据
+                导出数据
               </button>
             </li>
           </ul>
@@ -96,6 +105,7 @@
       </div>
 
       <div class="sidebar-footer">
+        <p style="font-size: 0.68rem; color: var(--text-muted); text-align: center; padding: 0 0 0.75rem; letter-spacing: 0.5px;">由草丛开发</p>
         <button id="sidebar-logout" class="sidebar-menu-btn" style="background: rgba(231, 76, 60, 0.08); color: var(--color-maintain); border: 1px solid rgba(231, 76, 60, 0.15);">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           退出登录
@@ -301,6 +311,49 @@
               <button type="submit" class="btn-action btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 确认修改密码
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- 基础设置 -->
+      <section id="admin-site-settings-section" class="admin-panel-section" style="display: none;">
+        <div class="admin-panel-card" style="max-width: 600px;">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            基础设置
+          </h3>
+          <p class="admin-panel-hint">修改网站名称、头像、个人资料等信息。保存后前台页面立即生效。</p>
+          <form id="site-settings-form" class="admin-panel-form">
+            <div class="form-group">
+              <label class="form-label">网站名称</label>
+              <input type="text" id="ss-site-name" class="form-input" placeholder="流光星野" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">作者名称</label>
+              <input type="text" id="ss-author-name" class="form-input" placeholder="星野流光" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">身份标签</label>
+              <input type="text" id="ss-author-tag" class="form-input" placeholder="🎨 独立开发者" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label class="form-label">个人签名</label>
+              <input type="text" id="ss-motto" class="form-input" placeholder="你的个人签名..." maxlength="60">
+            </div>
+            <div class="form-group">
+              <label class="form-label">头像图片链接（留空使用默认头像）</label>
+              <input type="url" id="ss-avatar-url" class="form-input" placeholder="https://example.com/avatar.jpg">
+            </div>
+            <div class="form-group">
+              <label class="form-label">版权署名</label>
+              <input type="text" id="ss-copyright" class="form-input" placeholder="流光星野" maxlength="30">
+            </div>
+            <div class="admin-panel-footer">
+              <button type="submit" class="btn-action btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                保存设置
               </button>
             </div>
           </form>

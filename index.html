@@ -15,7 +15,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb3c6' stroke-width='2.5'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>">
 
   <!-- 核心样式表 -->
-  <link rel="stylesheet" href="css/style.css?v=6">
+  <link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 
@@ -36,7 +36,7 @@
     <header class="nav-container">
       <div class="nav-logo">
         <svg class="logo-icon-svg" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-        <h1 class="logo-title">流光星野</h1>
+        <h1 class="logo-title" id="site-name-display">流光星野</h1>
         <span class="admin-badge">主页</span>
       </div>
       
@@ -56,8 +56,10 @@
     <section class="author-profile-card" aria-label="作者资料">
       <div class="avatar-container">
         <div class="avatar-frame">
-          <!-- 默认二次元萌系头像，使用透明背景美化SVG，或者用户自行覆盖 -->
-          <svg class="avatar-img" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- 自定义头像（后台设置 URL 后显示） -->
+          <img id="avatar-img" class="avatar-img" src="" alt="头像" style="display:none; object-fit:cover;">
+          <!-- 默认二次元萌系头像 -->
+          <svg id="avatar-svg" class="avatar-img" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="50" fill="#2a1f42"/>
             <path d="M50 25c-15 0-22 8-22 18 0 7 3 13 8 16 0 4-1 10-3 12 5-1 9-5 11-8 2 1 4 1 6 1s4 0 6-1c2 3 6 7 11 8-2-2-3-8-3-12 5-3 8-9 8-16 0-10-7-18-22-18z" fill="#ffb3c6"/>
             <circle cx="42" cy="43" r="3" fill="#fff"/>
@@ -69,11 +71,11 @@
       </div>
       <div class="profile-details">
         <div class="profile-meta">
-          <h2 class="author-name">星野流光</h2>
-          <span class="author-tag">🎨 独立开发者</span>
+          <h2 class="author-name" id="author-name-display">星野流光</h2>
+          <span class="author-tag" id="author-tag-display">🎨 独立开发者</span>
         </div>
-        <p class="author-motto">
-          <span>💫 “在星夜与代码的交界处，记录下属于自己的每一朵极光与落樱。”</span>
+        <p class=”author-motto”>
+          <span id=”author-motto-display”>💫 “在星夜与代码的交界处，记录下属于自己的每一朵极光与落樱。”</span>
         </p>
         <div class="social-matrix">
           <a id="social-github-btn" href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-button">
@@ -125,11 +127,12 @@
     <!-- 精美前台页脚 -->
     <footer class="portal-footer">
       <div class="footer-info">
-        <p class="footer-copy">© 2026 流光星野. All Rights Reserved.</p>
+        <p class="footer-copy" id="footer-copy-display">© 2026 流光星野. All Rights Reserved.</p>
         <p class="footer-brand">
-          <span>本站由 </span>
+          <span>由 </span>
           <span class="brand-heart">❤</span>
-          <span> 免费托管于 Cloudflare Pages</span>
+          <span id="footer-dev-name"> 草丛</span>
+          <span> 开发 · 免费托管于 Cloudflare Pages</span>
         </p>
       </div>
       <div class="footer-actions">

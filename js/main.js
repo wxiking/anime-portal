@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const CONTACT_INFO_KEY = 'portalContactInfo';
   const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
   const CATEGORIES_KEY = 'portalCategories';
+  const SITE_SETTINGS_KEY = 'portalSiteSettings';
+  const DEFAULT_SITE_SETTINGS = {
+    siteName: '流光星野',
+    authorName: '星野流光',
+    authorTag: '🎨 独立开发者',
+    motto: '在星夜与代码的交界处，记录下属于自己的每一朵极光与落樱。',
+    avatarUrl: '',
+    copyrightName: '草丛'
+  };
   let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
   // 默认分类（与原始数据的 category ID 对应）
@@ -72,6 +81,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveCategories(cats) {
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(cats));
+  }
+
+  function loadSiteSettings() {
+    const saved = localStorage.getItem(SITE_SETTINGS_KEY);
+    try { return saved ? JSON.parse(saved) : { ...DEFAULT_SITE_SETTINGS }; }
+    catch { return { ...DEFAULT_SITE_SETTINGS }; }
+  }
+
+  function saveSiteSettings(s) {
+    localStorage.setItem(SITE_SETTINGS_KEY, JSON.stringify(s));
+  }
+
+  function applySiteSettings(s) {
+    const logoTitle = document.getElementById('site-name-display');
+    if (logoTitle) logoTitle.textContent = s.siteName || DEFAULT_SITE_SETTINGS.siteName;
+
+    const authorName = document.getElementById('author-name-display');
+    if (authorName) authorName.textContent = s.authorName || DEFAULT_SITE_SETTINGS.authorName;
+
+    const authorTag = document.getElementById('author-tag-display');
+    if (authorTag) authorTag.textContent = s.authorTag || DEFAULT_SITE_SETTINGS.authorTag;
+
+    const mottoEl = document.getElementById('author-motto-display');
+    if (mottoEl) mottoEl.textContent = '💫 "' + (s.motto || DEFAULT_SITE_SETTINGS.motto) + '"';
+
+    const footerCopy = document.getElementById('footer-copy-display');
+    if (footerCopy) {
+      const name = s.copyrightName || DEFAULT_SITE_SETTINGS.copyrightName;
+      footerCopy.textContent = `© 2026 ${name}. All Rights Reserved.`;
+    }
+
+    const footerDev = document.getElementById('footer-dev-name');
+    if (footerDev) footerDev.textContent = ' ' + (s.copyrightName || DEFAULT_SITE_SETTINGS.copyrightName);
+
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarSvg = document.getElementById('avatar-svg');
+    if (s.avatarUrl && isSafeURL(s.avatarUrl)) {
+      if (avatarImg) { avatarImg.src = s.avatarUrl; avatarImg.style.display = ''; }
+      if (avatarSvg) avatarSvg.style.display = 'none';
+    } else {
+      if (avatarImg) avatarImg.style.display = 'none';
+      if (avatarSvg) avatarSvg.style.display = '';
+    }
   }
 
   let categories = loadCategories();
@@ -199,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   applyContactInfoToDOM(loadContactInfo());
+  applySiteSettings(loadSiteSettings());
 
   function loadData() {
     const localData = localStorage.getItem(STORAGE_KEY);
@@ -497,19 +550,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarCategoriesBtn = document.getElementById('sidebar-categories');
   const sidebarContactInfoBtn = document.getElementById('sidebar-contact-info');
   const sidebarChangePasswordBtn = document.getElementById('sidebar-change-password');
+  const sidebarSiteSettingsBtn = document.getElementById('sidebar-site-settings');
   const adminCategoriesSection = document.getElementById('admin-categories-section');
   const adminContactSection = document.getElementById('admin-contact-info-section');
   const adminChangePasswordSection = document.getElementById('admin-change-password-section');
+  const adminSiteSettingsSection = document.getElementById('admin-site-settings-section');
   const adminViewportTitle = document.querySelector('.admin-viewport-title');
   const adminHeaderActions = document.querySelector('.admin-header-actions');
 
-  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn];
+  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn, sidebarSiteSettingsBtn];
 
   function showAdminSection(section) {
     adminSplitBox.style.display = 'none';
     if (adminCategoriesSection) adminCategoriesSection.style.display = 'none';
     if (adminContactSection) adminContactSection.style.display = 'none';
     if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'none';
+    if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'none';
     ALL_SIDEBAR_BTNS.forEach(b => b && b.classList.remove('active'));
     if (adminHeaderActions) adminHeaderActions.style.display = 'none';
 
@@ -536,6 +592,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
       document.getElementById('change-password-form').reset();
       refreshPasswordOverrideStatus();
+    } else if (section === 'site-settings') {
+      if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'flex';
+      if (adminViewportTitle) adminViewportTitle.textContent = '基础设置';
+      if (sidebarSiteSettingsBtn) sidebarSiteSettingsBtn.classList.add('active');
+      loadSiteSettingsIntoForm();
     }
   }
 
@@ -560,6 +621,44 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMobileSidebar();
       closeAdminEditPanel();
       showAdminSection('change-password');
+    });
+  }
+
+  if (sidebarSiteSettingsBtn) {
+    sidebarSiteSettingsBtn.addEventListener('click', () => {
+      closeMobileSidebar();
+      closeAdminEditPanel();
+      showAdminSection('site-settings');
+    });
+  }
+
+  function loadSiteSettingsIntoForm() {
+    const s = loadSiteSettings();
+    const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    f('ss-site-name', s.siteName);
+    f('ss-author-name', s.authorName);
+    f('ss-author-tag', s.authorTag);
+    f('ss-motto', s.motto);
+    f('ss-avatar-url', s.avatarUrl);
+    f('ss-copyright', s.copyrightName);
+  }
+
+  const siteSettingsForm = document.getElementById('site-settings-form');
+  if (siteSettingsForm) {
+    siteSettingsForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const g = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      const settings = {
+        siteName: g('ss-site-name') || DEFAULT_SITE_SETTINGS.siteName,
+        authorName: g('ss-author-name') || DEFAULT_SITE_SETTINGS.authorName,
+        authorTag: g('ss-author-tag') || DEFAULT_SITE_SETTINGS.authorTag,
+        motto: g('ss-motto') || DEFAULT_SITE_SETTINGS.motto,
+        avatarUrl: g('ss-avatar-url'),
+        copyrightName: g('ss-copyright') || DEFAULT_SITE_SETTINGS.copyrightName
+      };
+      saveSiteSettings(settings);
+      applySiteSettings(settings);
+      alert('基础设置已保存！');
     });
   }
 
