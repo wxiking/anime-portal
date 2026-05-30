@@ -101,7 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function applySiteSettings(s) {
     const name = s.siteName || DEFAULT_SITE_SETTINGS.siteName;
-    document.title = document.title.replace(/^[^|｜]+/, name + ' ');
+    if (window.location.pathname.includes('/admin')) {
+      document.title = document.title.replace(/[|｜]\s*[^|｜]+$/, '| ' + name);
+    } else {
+      document.title = document.title.replace(/^[^|｜]+/, name + ' ');
+    }
 
     const logoTitle = document.getElementById('site-name-display');
     if (logoTitle) logoTitle.textContent = name;
