@@ -1453,7 +1453,7 @@ body {
 /* 筛选栏滚动包装器（手机端显示右侧渐隐提示） */
 .filter-tabs-wrapper {
   position: relative;
-  overflow: hidden;
+  /* 不设 overflow:hidden —— iOS Safari 下 hidden 会阻止子元素触摸滚动 */
   flex-shrink: 1;
   min-width: 0;
 }
@@ -1498,6 +1498,10 @@ body {
   display: flex;
   justify-content: flex-end;
   padding-top: 0.5rem;
+}
+.admin-panel-override-status {
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
 }
 .admin-panel-result {
   font-size: 0.88rem;
@@ -1561,20 +1565,26 @@ body {
   .portal-filter-tabs {
     overflow-x: auto;
     white-space: nowrap;
-    padding: 0.25rem;
+    padding: 0.25rem 0.25rem 0.4rem; /* 底部稍留空给 scrollbar */
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 179, 198, 0.45) transparent;
+    scrollbar-color: rgba(255, 179, 198, 0.5) rgba(255, 255, 255, 0.06);
+    -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
   }
   .portal-filter-tabs::-webkit-scrollbar {
     display: block;
     height: 3px;
   }
   .portal-filter-tabs::-webkit-scrollbar-thumb {
-    background: rgba(255, 179, 198, 0.45);
+    background: rgba(255, 179, 198, 0.5);
     border-radius: 99px;
   }
   .portal-filter-tabs::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 99px;
+  }
+  /* 防止按钮在 flex 容器内被压缩，保证内容溢出触发滚动 */
+  .portal-filter-tab {
+    flex-shrink: 0;
   }
   /* 右侧渐隐提示：告知用户可以横向滚动 */
   .filter-tabs-wrapper::after {
@@ -1582,11 +1592,11 @@ body {
     position: absolute;
     right: 0;
     top: 0;
-    bottom: 4px;
-    width: 36px;
-    background: linear-gradient(to right, transparent, rgba(10, 9, 30, 0.85));
+    bottom: 5px; /* 不盖住 scrollbar */
+    width: 40px;
+    background: linear-gradient(to right, transparent, rgba(10, 9, 30, 0.9));
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
   }
   
   .modal-content {

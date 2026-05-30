@@ -498,6 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cpResult = document.getElementById('cp-result');
       if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
       document.getElementById('change-password-form').reset();
+      refreshPasswordOverrideStatus();
     }
   }
 
@@ -925,6 +926,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // 9. 修改密码系统
   // ==========================================================================
 
+  function refreshPasswordOverrideStatus() {
+    const statusEl = document.getElementById('cp-override-status');
+    const clearBtn = document.getElementById('cp-clear-override');
+    const hasOverride = !!localStorage.getItem(PASSWORD_OVERRIDE_KEY);
+    if (!statusEl) return;
+    if (hasOverride) {
+      statusEl.textContent = '当前使用：本地覆盖密码（优先于 CF 配置）';
+      statusEl.style.cssText = 'font-size:0.8rem;color:var(--color-lavender);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(200,182,255,0.08);border:1px solid rgba(200,182,255,0.2);border-radius:8px;';
+      if (clearBtn) clearBtn.style.display = 'flex';
+    } else {
+      statusEl.textContent = '当前使用：CF 部署配置（config.js 中的哈希）';
+      statusEl.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;';
+      if (clearBtn) clearBtn.style.display = 'none';
+    }
+  }
+
+  const clearOverrideBtn = document.getElementById('cp-clear-override');
+  if (clearOverrideBtn) {
+    clearOverrideBtn.addEventListener('click', () => {
+      localStorage.removeItem(PASSWORD_OVERRIDE_KEY);
+      ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
+      refreshPasswordOverrideStatus();
+      const cpResult = document.getElementById('cp-result');
+      cpResult.textContent = '已清除本地覆盖，现在使用 CF 部署的密码。';
+      cpResult.className = 'admin-panel-result success';
+    });
+  }
+
   const changePasswordForm = document.getElementById('change-password-form');
   if (changePasswordForm) {
     changePasswordForm.addEventListener('submit', async (e) => {
@@ -958,6 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
       ADMIN_PASSWORD_HASH = newHash;
       changePasswordForm.reset();
+      refreshPasswordOverrideStatus();
       showResult('密码修改成功！新密码已保存到当前浏览器。', 'success');
     });
   }
