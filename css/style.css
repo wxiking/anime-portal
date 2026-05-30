@@ -1674,6 +1674,11 @@ body {
     max-width: 100%;
     min-width: 0;
     flex-shrink: 1;
+    overscroll-behavior-x: contain; /* 让筛选栏的触摸滑动与页面隔离 */
+  }
+  /* 防止筛选栏横向撑开整个页面 */
+  .portal-control-bar {
+    overflow-x: hidden;
   }
 
   /* 前台搜索框撑满 */

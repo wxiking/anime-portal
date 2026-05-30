@@ -15,7 +15,7 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb3c6' stroke-width='2.5'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>">
 
   <!-- 核心样式表 -->
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -37,7 +37,7 @@
       <div class="nav-logo">
         <svg class="logo-icon-svg" xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
         <h1 class="logo-title">流光星野</h1>
-        <span class="admin-badge">PORTAL</span>
+        <span class="admin-badge">主页</span>
       </div>
       
       <nav class="portal-nav-links" aria-label="外部友情链接">
@@ -78,19 +78,19 @@
         <div class="social-matrix">
           <a id="social-github-btn" href="https://github.com" target="_blank" rel="noopener noreferrer" class="social-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-            GitHub 宇宙
+            GitHub
           </a>
           <a id="social-email-btn" href="mailto:admin@example.com" class="social-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            邮件联络
+            发邮件
           </a>
           <span id="social-wechat-btn" class="social-button" onclick="showWechatInfo()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 6.1H3c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2z"/><path d="M23 9v6"/><path d="M8 12v.01"/><path d="M12 12v.01"/></svg>
-            WeChat 微信
+            微信
           </span>
           <span id="social-qq-btn" class="social-button" onclick="showQQInfo()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
-            QQ 交流群
+            QQ群
           </span>
         </div>
       </div>
@@ -118,8 +118,8 @@
     <!-- 搜索为空时显示的占位容器 -->
     <div id="empty-state" class="empty-state" style="border: 1px dashed rgba(255,255,255,0.15); border-radius: 20px; padding: 4rem 2rem; text-align: center; display: none;">
       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); margin-bottom: 1rem;"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>
-      <h3 style="font-size: 1.2rem; color: #fff; margin-bottom: 0.5rem;">没有找到匹配的星群节点</h3>
-      <p style="color: var(--text-secondary); font-size: 0.9rem;">换个检索词，或者切换顶部的分类群落试试吧~</p>
+      <h3 style="font-size: 1.2rem; color: #fff; margin-bottom: 0.5rem;">没有找到匹配的网站</h3>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">换个关键词，或者切换分类试试~</p>
     </div>
 
     <!-- 精美前台页脚 -->
@@ -129,13 +129,13 @@
         <p class="footer-brand">
           <span>本站由 </span>
           <span class="brand-heart">❤</span>
-          <span> 纯粹的二次元动漫毛玻璃美学与静态架构驱动</span>
+          <span> 免费托管于 Cloudflare Pages</span>
         </p>
       </div>
       <div class="footer-actions">
         <a href="https://pages.cloudflare.com" target="_blank" rel="noopener noreferrer" class="footer-deploy-badge" aria-label="部署在 Cloudflare">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          Cloudflare Pages 全球极致分发
+          部署于 Cloudflare Pages
         </a>
         <a href="/admin" class="admin-lock-btn" title="进入后台管理">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -179,7 +179,7 @@
         <div>
           <h3 class="modal-section-title">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 22 12 17 22 22 12 2"/></svg>
-            核心技术与特色功能
+            主要功能
           </h3>
           <ul id="modal-features-list" class="features-list">
             <!-- 动态渲染特性 -->
