@@ -406,7 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function getSVGIcon(key) {
-    return iconSVGMap[key] || iconSVGMap['folder'];
+    if (iconSVGMap[key]) return iconSVGMap[key];
+    const safe = escapeHTML(String(key || '🌐').slice(0, 8));
+    return `<span class="icon-emoji-display">${safe}</span>`;
   }
 
   function renderPortalCards() {
@@ -935,6 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const formSiteStatus = document.getElementById('form-site-status');
   const formSiteDesc = document.getElementById('form-site-desc');
   const formSiteDetail = document.getElementById('form-site-detail');
+  const formSiteFeatures = document.getElementById('form-site-features');
   
   const tagEditorBox = document.getElementById('tag-editor-box');
   const newTagInput = document.getElementById('new-tag-input');
@@ -951,6 +954,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formSiteStatus.value = site.status;
     formSiteDesc.value = site.description;
     formSiteDetail.value = site.detailedDescription;
+    if (formSiteFeatures) formSiteFeatures.value = (site.features || []).join('\n');
     
     // 标题文字微调整
     editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> 编辑网站：${escapeHTML(site.name)}`;
@@ -1011,6 +1015,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (editCloseBtn) editCloseBtn.addEventListener('click', closeAdminEditPanel);
 
+  document.querySelectorAll('.icon-preset').forEach(el => {
+    el.addEventListener('click', () => { if (formSiteIcon) formSiteIcon.value = el.dataset.emoji; });
+  });
+
   // 侧边栏按钮切换功能逻辑
   if (sidebarWebsitesBtn) {
     sidebarWebsitesBtn.addEventListener('click', () => {
@@ -1031,10 +1039,11 @@ document.addEventListener('DOMContentLoaded', () => {
       formSiteName.value = '';
       formSiteUrl.value = '';
       formSiteCategory.value = categories.length > 0 ? categories[0].id : '';
-      formSiteIcon.value = 'folder';
+      formSiteIcon.value = '🌐';
       formSiteStatus.value = 'online';
       formSiteDesc.value = '';
       formSiteDetail.value = '';
+      if (formSiteFeatures) formSiteFeatures.value = '';
       
       editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 添加新网站`;
       currentEditingTags = ["Vite", "Cloudflare"];
@@ -1054,10 +1063,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const siteName = formSiteName.value.trim();
       const siteUrl = formSiteUrl.value.trim();
       const siteCategory = formSiteCategory.value;
-      const siteIcon = formSiteIcon.value;
+      const siteIcon = formSiteIcon.value.trim() || '🌐';
       const siteStatus = formSiteStatus.value;
       const siteDesc = formSiteDesc.value.trim();
       const siteDetail = formSiteDetail.value.trim();
+      const siteFeatures = formSiteFeatures
+        ? formSiteFeatures.value.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 5)
+        : [];
 
       if (!siteName || !siteUrl) {
         showToast('请输入网站名称与链接！', 'error');
@@ -1104,11 +1116,7 @@ document.addEventListener('DOMContentLoaded', () => {
           status: siteStatus,
           statusText: statusTextMap[siteStatus],
           bgGradient: randomGradient,
-          features: [
-            "一键极速加载访问",
-            "二次元毛玻璃磨砂交互面板",
-            "零服务器 Cloudflare Pages 完美运行"
-          ]
+          features: siteFeatures.length > 0 ? siteFeatures : ['一键极速加载访问']
         };
         websites.push(newSite);
       } else {
@@ -1127,7 +1135,8 @@ document.addEventListener('DOMContentLoaded', () => {
             icon: siteIcon,
             tags: currentEditingTags,
             status: siteStatus,
-            statusText: statusTextMap[siteStatus]
+            statusText: statusTextMap[siteStatus],
+            features: siteFeatures.length > 0 ? siteFeatures : (websites[siteIdx].features || [])
           };
         }
       }

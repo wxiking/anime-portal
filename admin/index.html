@@ -193,15 +193,36 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label" for="form-site-icon">网站图标</label>
-              <select id="form-site-icon" class="form-select">
-                <option value="book-open">📖 书本杂志</option>
-                <option value="code">💻 开源代码</option>
-                <option value="palette">🎨 艺术画笔</option>
-                <option value="gamepad-2">🎮 游戏手柄</option>
-                <option value="book">📝 笔记日记</option>
-                <option value="folder">📁 资源文件</option>
-              </select>
+              <label class="form-label">网站图标（输入或点击选择 Emoji）</label>
+              <div class="icon-picker-wrap">
+                <input type="text" id="form-site-icon" class="form-input icon-emoji-input" placeholder="🌐" maxlength="8">
+                <div class="icon-preset-grid">
+                  <span class="icon-preset" data-emoji="🌐">🌐</span>
+                  <span class="icon-preset" data-emoji="🔗">🔗</span>
+                  <span class="icon-preset" data-emoji="💡">💡</span>
+                  <span class="icon-preset" data-emoji="📁">📁</span>
+                  <span class="icon-preset" data-emoji="📝">📝</span>
+                  <span class="icon-preset" data-emoji="📖">📖</span>
+                  <span class="icon-preset" data-emoji="💻">💻</span>
+                  <span class="icon-preset" data-emoji="🎨">🎨</span>
+                  <span class="icon-preset" data-emoji="🎮">🎮</span>
+                  <span class="icon-preset" data-emoji="🎵">🎵</span>
+                  <span class="icon-preset" data-emoji="📷">📷</span>
+                  <span class="icon-preset" data-emoji="🛒">🛒</span>
+                  <span class="icon-preset" data-emoji="🔧">🔧</span>
+                  <span class="icon-preset" data-emoji="🚀">🚀</span>
+                  <span class="icon-preset" data-emoji="⭐">⭐</span>
+                  <span class="icon-preset" data-emoji="🏠">🏠</span>
+                  <span class="icon-preset" data-emoji="📱">📱</span>
+                  <span class="icon-preset" data-emoji="🎯">🎯</span>
+                  <span class="icon-preset" data-emoji="🌸">🌸</span>
+                  <span class="icon-preset" data-emoji="⚡">⚡</span>
+                  <span class="icon-preset" data-emoji="🔐">🔐</span>
+                  <span class="icon-preset" data-emoji="📊">📊</span>
+                  <span class="icon-preset" data-emoji="🎬">🎬</span>
+                  <span class="icon-preset" data-emoji="🌍">🌍</span>
+                </div>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">标签（输入后按回车添加）</label>
@@ -216,6 +237,10 @@
             <div class="form-group">
               <label class="form-label" for="form-site-detail">详细介绍（点击卡片弹窗显示）</label>
               <textarea id="form-site-detail" class="form-textarea" placeholder="详细介绍这个网站的功能、特色、规划等..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-site-features">主要功能（每行一条，最多5条，显示在详情弹窗）</label>
+              <textarea id="form-site-features" class="form-textarea" rows="4" placeholder="一键极速加载访问&#10;支持手机端访问&#10;完全免费使用"></textarea>
             </div>
             <div class="edit-panel-footer">
               <button type="button" class="btn-action btn-secondary" onclick="document.getElementById('edit-close-btn').click()">❌ 取消</button>
