@@ -838,17 +838,22 @@ body {
 .admin-category-select {
   padding: 0.65rem 1.5rem 0.65rem 1rem;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(13, 11, 37, 0.85);
   border: 1px solid var(--glass-border);
-  color: #fff;
+  color: #e8e0ff;
   font-size: 0.88rem;
   outline: none;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='white' stroke-width='2' viewBox='0 0 24 24'><polyline points='6 9 12 15 18 9'/></svg>");
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23e8e0ff' stroke-width='2' viewBox='0 0 24 24'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 0.65rem center;
+}
+.admin-category-select option {
+  background: #1a1535;
+  color: #e8e0ff;
 }
 
 /* 3. 联动分栏并排控制框架 (Side-by-Side Flex Split) */
@@ -1076,10 +1081,15 @@ body {
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='white' stroke-width='2' viewBox='0 0 24 24'><polyline points='6 9 12 15 18 9'/></svg>");
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23e8e0ff' stroke-width='2' viewBox='0 0 24 24'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   padding-right: 2rem;
+}
+.form-select option {
+  background: #1a1535;
+  color: #e8e0ff;
 }
 
 /* 标签列表编辑器 (Interactive Tag Editor) */

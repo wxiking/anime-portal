@@ -510,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalStatus = document.getElementById('modal-status');
   const modalDescription = document.getElementById('modal-description');
   const modalFeaturesList = document.getElementById('modal-features-list');
+  const modalFeaturesSection = document.getElementById('modal-features-section');
   const modalBtnSecondary = document.getElementById('modal-btn-secondary');
   const modalBtnPrimary = document.getElementById('modal-btn-primary');
 
@@ -520,8 +521,10 @@ document.addEventListener('DOMContentLoaded', () => {
     modalStatus.innerHTML = `<span class="card-status-dot"></span><span>${escapeHTML(site.statusText)}</span>`;
     modalDescription.textContent = site.detailedDescription;
 
+    const features = (site.features || []).filter(Boolean);
+    if (modalFeaturesSection) modalFeaturesSection.style.display = features.length > 0 ? '' : 'none';
     modalFeaturesList.innerHTML = '';
-    (site.features || []).forEach(feat => {
+    features.forEach(feat => {
       const li = document.createElement('li');
       li.className = 'feature-item';
       li.innerHTML = `
