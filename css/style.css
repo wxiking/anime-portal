@@ -1522,6 +1522,17 @@ body {
     gap: 1rem;
   }
 
+  /* 前台筛选栏撑满并限制宽度 */
+  .portal-filter-tabs {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .portal-control-bar {
+    overflow-x: hidden;
+  }
+
   /* 前台搜索框撑满 */
   .portal-search-wrapper {
     width: 100%;
