@@ -1609,37 +1609,47 @@ body {
     align-items: stretch;
     gap: 1.25rem;
   }
-  .portal-filter-tabs {
+  /* 包装器作为实际横向滚动容器（避免 iOS 下 flex overflow-x:auto 失效） */
+  .filter-tabs-wrapper {
+    width: 100%;
     overflow-x: auto;
-    white-space: nowrap;
-    padding: 0.25rem 0.25rem 0.4rem; /* 底部稍留空给 scrollbar */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 179, 198, 0.5) rgba(255, 255, 255, 0.06);
-    -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
+    padding-bottom: 3px;
   }
-  .portal-filter-tabs::-webkit-scrollbar {
+  .filter-tabs-wrapper::-webkit-scrollbar {
     display: block;
     height: 3px;
   }
-  .portal-filter-tabs::-webkit-scrollbar-thumb {
+  .filter-tabs-wrapper::-webkit-scrollbar-thumb {
     background: rgba(255, 179, 198, 0.5);
     border-radius: 99px;
   }
-  .portal-filter-tabs::-webkit-scrollbar-track {
+  .filter-tabs-wrapper::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.06);
     border-radius: 99px;
   }
-  /* 防止按钮在 flex 容器内被压缩，保证内容溢出触发滚动 */
+  /* 筛选栏本体：inline-flex 撑开内容宽度，触发包装器滚动 */
+  .portal-filter-tabs {
+    display: inline-flex;
+    width: auto;
+    min-width: 100%;
+    padding: 0.35rem;
+    white-space: nowrap;
+  }
+  /* 按钮不缩小，保证内容能撑出包装器宽度 */
   .portal-filter-tab {
     flex-shrink: 0;
   }
-  /* 右侧渐隐提示：告知用户可以横向滚动 */
+  /* 右侧渐隐提示：提示用户可横向滑动 */
   .filter-tabs-wrapper::after {
     content: '';
     position: absolute;
     right: 0;
     top: 0;
-    bottom: 5px; /* 不盖住 scrollbar */
+    bottom: 3px;
     width: 40px;
     background: linear-gradient(to right, transparent, rgba(10, 9, 30, 0.9));
     pointer-events: none;
@@ -1668,14 +1678,6 @@ body {
     gap: 1rem;
   }
 
-  /* 前台筛选栏撑满并限制宽度 */
-  .portal-filter-tabs {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    flex-shrink: 1;
-    overscroll-behavior-x: contain; /* 让筛选栏的触摸滑动与页面隔离 */
-  }
   /* 防止筛选栏横向撑开整个页面 */
   .portal-control-bar {
     overflow-x: hidden;
