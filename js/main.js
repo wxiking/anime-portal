@@ -53,7 +53,90 @@ document.addEventListener('DOMContentLoaded', () => {
   const STORAGE_KEY = 'anime_websites_portal_data';
   const CONTACT_INFO_KEY = 'portalContactInfo';
   const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
+  const CATEGORIES_KEY = 'portalCategories';
   let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
+
+  // 默认分类（与原始数据的 category ID 对应）
+  const DEFAULT_CATEGORIES = [
+    { id: 'blog', name: '技术博客' },
+    { id: 'code', name: '开源仓库' },
+    { id: 'art', name: '艺术空间' },
+    { id: 'game', name: '游戏世界' }
+  ];
+
+  function loadCategories() {
+    const saved = localStorage.getItem(CATEGORIES_KEY);
+    try { return saved ? JSON.parse(saved) : [...DEFAULT_CATEGORIES]; }
+    catch { return [...DEFAULT_CATEGORIES]; }
+  }
+
+  function saveCategories(cats) {
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(cats));
+  }
+
+  let categories = loadCategories();
+
+  function getCategoryName(id) {
+    const cat = categories.find(c => c.id === id);
+    return cat ? cat.name : id;
+  }
+
+  // 渲染前台筛选标签
+  function renderFilterTabs() {
+    const container = document.getElementById('portal-filter-tabs');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'portal-filter-tab' + (currentCategory === 'all' ? ' active' : '');
+    allBtn.dataset.category = 'all';
+    allBtn.setAttribute('role', 'tab');
+    allBtn.setAttribute('aria-selected', currentCategory === 'all' ? 'true' : 'false');
+    allBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg> 全部`;
+    container.appendChild(allBtn);
+
+    categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'portal-filter-tab' + (currentCategory === cat.id ? ' active' : '');
+      btn.dataset.category = cat.id;
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', currentCategory === cat.id ? 'true' : 'false');
+      btn.textContent = cat.name;
+      container.appendChild(btn);
+    });
+
+    container.querySelectorAll('.portal-filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        container.querySelectorAll('.portal-filter-tab').forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+        currentCategory = tab.dataset.category;
+        renderPortalCards();
+      });
+    });
+  }
+
+  // 填充后台分类下拉框
+  function populateCategoryDropdowns() {
+    const adminSelect = document.getElementById('admin-category-select');
+    if (adminSelect) {
+      const cur = adminSelect.value;
+      adminSelect.innerHTML = '<option value="all">全部分类</option>' +
+        categories.map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`).join('');
+      if (cur) adminSelect.value = cur;
+    }
+    const formSelect = document.getElementById('form-site-category');
+    if (formSelect) {
+      const cur = formSelect.value;
+      formSelect.innerHTML = categories.map(c =>
+        `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`
+      ).join('');
+      if (cur) formSelect.value = cur;
+    }
+  }
 
   async function hashPassword(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -144,9 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const portalGrid = document.getElementById('portal-grid');
   const searchInput = document.getElementById('portal-search-input');
-  const filterTabs = document.querySelectorAll('.portal-filter-tab');
   const emptyState = document.getElementById('empty-state');
-  
+
   let currentCategory = 'all';
   let searchQuery = '';
 
@@ -192,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const cardMeta = `
         <div class="card-meta-row">
-          <span class="card-category-tag">${escapeHTML(site.categoryName)}</span>
+          <span class="card-category-tag">${escapeHTML(getCategoryName(site.category) || site.categoryName || '')}</span>
           <div class="card-status ${escapeHTML(site.status)}">
             <span class="card-status-dot"></span>
             <span>${escapeHTML(site.statusText)}</span>
@@ -238,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 前台筛选与搜索事件监听
+  // 前台搜索事件监听
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       searchQuery = e.target.value;
@@ -246,16 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  filterTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      filterTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-      tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
-      currentCategory = tab.getAttribute('data-category');
-      renderPortalCards();
-    });
-  });
-
+  // 动态渲染筛选标签并绑定事件
+  renderFilterTabs();
   renderPortalCards();
 
   // ==========================================================================
@@ -462,44 +536,57 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSplitBox = document.getElementById('admin-split-box');
   const sidebarWebsitesBtn = document.getElementById('sidebar-websites');
   const sidebarAddNewBtn = document.getElementById('sidebar-add-new');
+  const sidebarCategoriesBtn = document.getElementById('sidebar-categories');
   const sidebarContactInfoBtn = document.getElementById('sidebar-contact-info');
   const sidebarChangePasswordBtn = document.getElementById('sidebar-change-password');
+  const adminCategoriesSection = document.getElementById('admin-categories-section');
   const adminContactSection = document.getElementById('admin-contact-info-section');
   const adminChangePasswordSection = document.getElementById('admin-change-password-section');
   const adminViewportTitle = document.querySelector('.admin-viewport-title');
   const adminHeaderActions = document.querySelector('.admin-header-actions');
 
-  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn];
+  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn];
 
   function showAdminSection(section) {
-    // 隐藏所有区块
     adminSplitBox.style.display = 'none';
+    if (adminCategoriesSection) adminCategoriesSection.style.display = 'none';
     if (adminContactSection) adminContactSection.style.display = 'none';
     if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'none';
-    // 清除所有侧边栏高亮
     ALL_SIDEBAR_BTNS.forEach(b => b && b.classList.remove('active'));
+    if (adminHeaderActions) adminHeaderActions.style.display = 'none';
 
     if (section === 'websites') {
       adminSplitBox.style.display = 'flex';
-      if (adminViewportTitle) adminViewportTitle.textContent = '星群节点集群管理器';
+      if (adminViewportTitle) adminViewportTitle.textContent = '网站管理';
       if (adminHeaderActions) adminHeaderActions.style.display = 'flex';
       if (sidebarWebsitesBtn) sidebarWebsitesBtn.classList.add('active');
+    } else if (section === 'categories') {
+      if (adminCategoriesSection) adminCategoriesSection.style.display = 'flex';
+      if (adminViewportTitle) adminViewportTitle.textContent = '分类管理';
+      if (sidebarCategoriesBtn) sidebarCategoriesBtn.classList.add('active');
+      renderCategoriesList();
     } else if (section === 'contact-info') {
       if (adminContactSection) adminContactSection.style.display = 'flex';
-      if (adminViewportTitle) adminViewportTitle.textContent = '联系方式管理';
-      if (adminHeaderActions) adminHeaderActions.style.display = 'none';
+      if (adminViewportTitle) adminViewportTitle.textContent = '联系方式';
       if (sidebarContactInfoBtn) sidebarContactInfoBtn.classList.add('active');
       loadContactInfoIntoForm();
     } else if (section === 'change-password') {
       if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'flex';
-      if (adminViewportTitle) adminViewportTitle.textContent = '修改登录密码';
-      if (adminHeaderActions) adminHeaderActions.style.display = 'none';
+      if (adminViewportTitle) adminViewportTitle.textContent = '修改密码';
       if (sidebarChangePasswordBtn) sidebarChangePasswordBtn.classList.add('active');
       const cpResult = document.getElementById('cp-result');
       if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
       document.getElementById('change-password-form').reset();
       refreshPasswordOverrideStatus();
     }
+  }
+
+  if (sidebarCategoriesBtn) {
+    sidebarCategoriesBtn.addEventListener('click', () => {
+      closeMobileSidebar();
+      closeAdminEditPanel();
+      showAdminSection('categories');
+    });
   }
 
   if (sidebarContactInfoBtn) {
@@ -526,6 +613,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initAdminDashboard() {
     adminCurrentPage = 1;
+    populateCategoryDropdowns();
     showAdminSection('websites');
     renderAdminTable();
   }
@@ -820,13 +908,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ];
       const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
 
-      const categoryNameMap = {
-        'ai': 'AI 智脑',
-        'blog': '技术博客',
-        'code': '开源仓库',
-        'art': '艺术空间',
-        'game': '游戏世界'
-      };
+      // 从当前分类配置里取名称
+      const categoryNameMap = Object.fromEntries(categories.map(c => [c.id, c.name]));
 
       if (idVal === 'new') {
         // 创建新网站
@@ -892,7 +975,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // 8. 联系方式管理系统
+  // 8. 分类管理系统
+  // ==========================================================================
+
+  function renderCategoriesList() {
+    const listEl = document.getElementById('categories-list');
+    if (!listEl) return;
+    if (categories.length === 0) {
+      listEl.innerHTML = '<p style="color:var(--text-muted);font-size:0.88rem;padding:0.5rem 0;">暂无分类，添加后前台筛选栏会自动更新。</p>';
+      return;
+    }
+    listEl.innerHTML = '';
+    categories.forEach((cat, idx) => {
+      const item = document.createElement('div');
+      item.className = 'category-item';
+      item.innerHTML = `
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span class="category-item-index">${idx + 1}</span>
+          <span class="category-item-name">${escapeHTML(cat.name)}</span>
+          <span class="category-item-id">ID: ${escapeHTML(cat.id)}</span>
+        </div>
+        <button class="table-action-btn delete cat-delete-btn" data-idx="${idx}" title="删除此分类">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
+      `;
+      item.querySelector('.cat-delete-btn').addEventListener('click', () => {
+        if (!confirm(`确认删除分类「${cat.name}」吗？该分类下的网站不会被删除，仍在「全部」中显示。`)) return;
+        categories.splice(idx, 1);
+        saveCategories(categories);
+        renderCategoriesList();
+        populateCategoryDropdowns();
+        renderFilterTabs();
+      });
+      listEl.appendChild(item);
+    });
+  }
+
+  const addCategoryForm = document.getElementById('add-category-form');
+  if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nameInput = document.getElementById('new-category-name');
+      const name = nameInput.value.trim();
+      if (!name) return;
+      // 自动生成英文 ID（时间戳，保证唯一）
+      const id = 'cat_' + Date.now();
+      categories.push({ id, name });
+      saveCategories(categories);
+      nameInput.value = '';
+      renderCategoriesList();
+      populateCategoryDropdowns();
+      renderFilterTabs();
+    });
+  }
+
+  // ==========================================================================
+  // 9. 联系方式管理系统
   // ==========================================================================
 
   function loadContactInfoIntoForm() {
