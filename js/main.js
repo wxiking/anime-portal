@@ -401,85 +401,55 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (modalOverlay && modalOverlay.classList.contains('active')) closeDetailModal();
-    if (loginOverlay && loginOverlay.classList.contains('active')) {
-      loginOverlay.classList.remove('active');
-      passwordInput.value = '';
-    }
   });
 
   // ==========================================================================
-  // 5. 二次元管理登录系统 (Consistent Admin Login verification)
+  // 5. 登录系统（仅在 /admin 页面运行）
   // ==========================================================================
 
-  const adminLockBtn = document.getElementById('admin-lock-btn');
-  const loginOverlay = document.getElementById('login-overlay');
-  const loginCloseBtn = document.getElementById('login-close-corner');
-  const loginForm = document.getElementById('login-form');
-  const passwordInput = document.getElementById('admin-password');
-  
-  const portalWrapper = document.querySelector('.portal-wrapper');
+  const isAdminPage = !!document.querySelector('.admin-wrapper');
   const adminWrapper = document.querySelector('.admin-wrapper');
 
-  if (adminLockBtn) {
-    adminLockBtn.addEventListener('click', () => {
-      loginOverlay.classList.add('active');
-      passwordInput.focus();
-    });
-  }
+  if (isAdminPage) {
+    const loginOverlay = document.getElementById('login-overlay');
+    const loginForm = document.getElementById('login-form');
+    const passwordInput = document.getElementById('admin-password');
 
-  if (loginCloseBtn) {
-    loginCloseBtn.addEventListener('click', () => {
-      loginOverlay.classList.remove('active');
-      passwordInput.value = '';
-    });
-  }
+    let loginFailCount = 0;
+    let loginLockedUntil = 0;
 
-  let loginFailCount = 0;
-  let loginLockedUntil = 0;
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      if (Date.now() < loginLockedUntil) {
-        const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
-        alert(`登录已暂时锁定，请 ${remaining} 秒后重试。`);
-        return;
-      }
-
-      const enteredPassword = passwordInput.value;
-      const hash = await hashPassword(enteredPassword);
-      if (hash === ADMIN_PASSWORD_HASH) {
-        loginFailCount = 0;
-        // 登录成功：无刷新切入后台控制台
-        loginOverlay.classList.remove('active');
-        passwordInput.value = '';
-
-        // 前台淡出，后台淡入
-        portalWrapper.style.opacity = '0';
-        setTimeout(() => {
-          portalWrapper.style.display = 'none';
-          adminWrapper.style.display = 'flex';
-          setTimeout(() => {
-            adminWrapper.classList.add('active');
-            initAdminDashboard();
-          }, 50);
-        }, 500);
-      } else {
-        loginFailCount++;
-        if (loginFailCount >= 5) {
-          loginLockedUntil = Date.now() + 30 * 1000;
-          loginFailCount = 0;
-          alert('连续错误次数过多，账号已锁定 30 秒。');
+        if (Date.now() < loginLockedUntil) {
+          const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
+          alert(`登录已暂时锁定，请 ${remaining} 秒后重试。`);
+          return;
         }
-        // 密码错误微抖动提示
-        passwordInput.style.borderColor = 'var(--color-maintain)';
-        passwordInput.style.animation = 'shake 0.4s ease';
-        setTimeout(() => {
-          passwordInput.style.animation = '';
-        }, 400);
-      }
-    });
+
+        const enteredPassword = passwordInput.value;
+        const hash = await hashPassword(enteredPassword);
+        if (hash === ADMIN_PASSWORD_HASH) {
+          loginFailCount = 0;
+          loginOverlay.classList.remove('active');
+          passwordInput.value = '';
+          adminWrapper.style.display = 'flex';
+          setTimeout(() => adminWrapper.classList.add('active'), 20);
+          initAdminDashboard();
+        } else {
+          loginFailCount++;
+          if (loginFailCount >= 5) {
+            loginLockedUntil = Date.now() + 30 * 1000;
+            loginFailCount = 0;
+            alert('连续错误次数过多，账号已锁定 30 秒。');
+          }
+          passwordInput.style.borderColor = 'var(--color-maintain)';
+          passwordInput.style.animation = 'shake 0.4s ease';
+          setTimeout(() => { passwordInput.style.animation = ''; }, 400);
+        }
+      });
+    }
   }
 
   // 移动端汉堡菜单切换侧边栏
@@ -488,41 +458,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSidebarBackdrop = document.getElementById('admin-sidebar-backdrop');
 
   function openMobileSidebar() {
-    adminSidebar.classList.add('mobile-active');
-    adminSidebarBackdrop.classList.add('active');
+    if (adminSidebar) adminSidebar.classList.add('mobile-active');
+    if (adminSidebarBackdrop) adminSidebarBackdrop.classList.add('active');
   }
   function closeMobileSidebar() {
-    adminSidebar.classList.remove('mobile-active');
-    adminSidebarBackdrop.classList.remove('active');
+    if (adminSidebar) adminSidebar.classList.remove('mobile-active');
+    if (adminSidebarBackdrop) adminSidebarBackdrop.classList.remove('active');
   }
 
   if (adminMenuToggle) {
     adminMenuToggle.addEventListener('click', () => {
-      if (adminSidebar.classList.contains('mobile-active')) {
-        closeMobileSidebar();
-      } else {
-        openMobileSidebar();
-      }
+      adminSidebar.classList.contains('mobile-active') ? closeMobileSidebar() : openMobileSidebar();
     });
   }
   if (adminSidebarBackdrop) {
     adminSidebarBackdrop.addEventListener('click', closeMobileSidebar);
   }
 
-  // 退出登录，切回前台
+  // 退出登录 → 跳回首页
   const sidebarLogoutBtn = document.getElementById('sidebar-logout');
   if (sidebarLogoutBtn) {
     sidebarLogoutBtn.addEventListener('click', () => {
-      closeAdminEditPanel(); // 关闭可能打开的并排编辑
-      adminWrapper.classList.remove('active');
-      setTimeout(() => {
-        adminWrapper.style.display = 'none';
-        portalWrapper.style.display = 'flex';
-        setTimeout(() => {
-          portalWrapper.style.opacity = '1';
-          renderPortalCards(); // 重绘前台卡片，确保后台改动实时更新
-        }, 50);
-      }, 500);
+      window.location.href = '/';
     });
   }
 
