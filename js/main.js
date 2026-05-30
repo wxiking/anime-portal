@@ -51,7 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let websites = [];
   const STORAGE_KEY = 'anime_websites_portal_data';
-  const ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
+  const CONTACT_INFO_KEY = 'portalContactInfo';
+  const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
+  let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
   async function hashPassword(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -75,6 +77,45 @@ document.addEventListener('DOMContentLoaded', () => {
       return false;
     }
   }
+
+  // 联系方式默认值
+  const DEFAULT_CONTACT_INFO = {
+    githubUrl: 'https://github.com',
+    email: 'admin@example.com',
+    wechatId: 'Hoshino_Sakura',
+    wechatNote: '请备注合作说明哦~',
+    qqGroup: '987654321'
+  };
+
+  function loadContactInfo() {
+    const saved = localStorage.getItem(CONTACT_INFO_KEY);
+    try { return saved ? JSON.parse(saved) : { ...DEFAULT_CONTACT_INFO }; }
+    catch { return { ...DEFAULT_CONTACT_INFO }; }
+  }
+
+  function applyContactInfoToDOM(info) {
+    const navGithub = document.getElementById('nav-github-link');
+    const navEmail = document.getElementById('nav-email-link');
+    const socialGithub = document.getElementById('social-github-btn');
+    const socialEmail = document.getElementById('social-email-btn');
+
+    if (navGithub) navGithub.href = info.githubUrl || DEFAULT_CONTACT_INFO.githubUrl;
+    if (navEmail) navEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
+    if (socialGithub) socialGithub.href = info.githubUrl || DEFAULT_CONTACT_INFO.githubUrl;
+    if (socialEmail) socialEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
+  }
+
+  // 全局函数供 onclick 使用
+  window.showWechatInfo = function() {
+    const info = loadContactInfo();
+    alert(`微信联系方式：${info.wechatId} (${info.wechatNote})`);
+  };
+  window.showQQInfo = function() {
+    const info = loadContactInfo();
+    alert(`官方QQ交流群：${info.qqGroup}`);
+  };
+
+  applyContactInfoToDOM(loadContactInfo());
 
   function loadData() {
     const localData = localStorage.getItem(STORAGE_KEY);
@@ -421,6 +462,60 @@ document.addEventListener('DOMContentLoaded', () => {
   const adminSplitBox = document.getElementById('admin-split-box');
   const sidebarWebsitesBtn = document.getElementById('sidebar-websites');
   const sidebarAddNewBtn = document.getElementById('sidebar-add-new');
+  const sidebarContactInfoBtn = document.getElementById('sidebar-contact-info');
+  const sidebarChangePasswordBtn = document.getElementById('sidebar-change-password');
+  const adminContactSection = document.getElementById('admin-contact-info-section');
+  const adminChangePasswordSection = document.getElementById('admin-change-password-section');
+  const adminViewportTitle = document.querySelector('.admin-viewport-title');
+  const adminHeaderActions = document.querySelector('.admin-header-actions');
+
+  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn];
+
+  function showAdminSection(section) {
+    // 隐藏所有区块
+    adminSplitBox.style.display = 'none';
+    if (adminContactSection) adminContactSection.style.display = 'none';
+    if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'none';
+    // 清除所有侧边栏高亮
+    ALL_SIDEBAR_BTNS.forEach(b => b && b.classList.remove('active'));
+
+    if (section === 'websites') {
+      adminSplitBox.style.display = 'flex';
+      if (adminViewportTitle) adminViewportTitle.textContent = '星群节点集群管理器';
+      if (adminHeaderActions) adminHeaderActions.style.display = 'flex';
+      if (sidebarWebsitesBtn) sidebarWebsitesBtn.classList.add('active');
+    } else if (section === 'contact-info') {
+      if (adminContactSection) adminContactSection.style.display = 'flex';
+      if (adminViewportTitle) adminViewportTitle.textContent = '联系方式管理';
+      if (adminHeaderActions) adminHeaderActions.style.display = 'none';
+      if (sidebarContactInfoBtn) sidebarContactInfoBtn.classList.add('active');
+      loadContactInfoIntoForm();
+    } else if (section === 'change-password') {
+      if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'flex';
+      if (adminViewportTitle) adminViewportTitle.textContent = '修改登录密码';
+      if (adminHeaderActions) adminHeaderActions.style.display = 'none';
+      if (sidebarChangePasswordBtn) sidebarChangePasswordBtn.classList.add('active');
+      const cpResult = document.getElementById('cp-result');
+      if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
+      document.getElementById('change-password-form').reset();
+    }
+  }
+
+  if (sidebarContactInfoBtn) {
+    sidebarContactInfoBtn.addEventListener('click', () => {
+      closeMobileSidebar();
+      closeAdminEditPanel();
+      showAdminSection('contact-info');
+    });
+  }
+
+  if (sidebarChangePasswordBtn) {
+    sidebarChangePasswordBtn.addEventListener('click', () => {
+      closeMobileSidebar();
+      closeAdminEditPanel();
+      showAdminSection('change-password');
+    });
+  }
 
   // 后台分页及检索状态
   let adminSearchQuery = '';
@@ -430,6 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function initAdminDashboard() {
     adminCurrentPage = 1;
+    showAdminSection('websites');
     renderAdminTable();
   }
 
@@ -651,18 +747,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // 侧边栏按钮切换功能逻辑
   if (sidebarWebsitesBtn) {
     sidebarWebsitesBtn.addEventListener('click', () => {
-      sidebarWebsitesBtn.classList.add('active');
-      sidebarAddNewBtn.classList.remove('active');
       closeAdminEditPanel();
       closeMobileSidebar();
+      showAdminSection('websites');
     });
   }
 
   // 侧栏一键”新添节点”表单调起 (同样采用联动分栏模式)
   if (sidebarAddNewBtn) {
     sidebarAddNewBtn.addEventListener('click', () => {
-      sidebarAddNewBtn.classList.add('active');
-      sidebarWebsitesBtn.classList.remove('active');
+      showAdminSection('websites');
       closeMobileSidebar();
       
       // 初始化空数据表单
@@ -781,10 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderAdminTable();
       
       // 重置侧边栏高亮
-      if (sidebarWebsitesBtn) {
-        sidebarWebsitesBtn.classList.add('active');
-        sidebarAddNewBtn.classList.remove('active');
-      }
+      showAdminSection('websites');
 
       alert("节点保存成功！数据已实时写入您的本地浏览器缓存。");
     });
@@ -800,7 +891,79 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // 8. 针对 Cloudflare Pages 的配置导出系统 (data.js Download compiler)
+  // 8. 联系方式管理系统
+  // ==========================================================================
+
+  function loadContactInfoIntoForm() {
+    const info = loadContactInfo();
+    const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    f('ci-github', info.githubUrl);
+    f('ci-email', info.email);
+    f('ci-wechat', info.wechatId);
+    f('ci-wechat-note', info.wechatNote);
+    f('ci-qq', info.qqGroup);
+  }
+
+  const contactInfoForm = document.getElementById('contact-info-form');
+  if (contactInfoForm) {
+    contactInfoForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const info = {
+        githubUrl: document.getElementById('ci-github').value.trim() || DEFAULT_CONTACT_INFO.githubUrl,
+        email: document.getElementById('ci-email').value.trim() || DEFAULT_CONTACT_INFO.email,
+        wechatId: document.getElementById('ci-wechat').value.trim() || DEFAULT_CONTACT_INFO.wechatId,
+        wechatNote: document.getElementById('ci-wechat-note').value.trim() || DEFAULT_CONTACT_INFO.wechatNote,
+        qqGroup: document.getElementById('ci-qq').value.trim() || DEFAULT_CONTACT_INFO.qqGroup
+      };
+      localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
+      applyContactInfoToDOM(info);
+      alert('联系方式已保存，前台页面已实时更新！');
+    });
+  }
+
+  // ==========================================================================
+  // 9. 修改密码系统
+  // ==========================================================================
+
+  const changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cpResult = document.getElementById('cp-result');
+      const currentVal = document.getElementById('cp-current').value;
+      const newVal = document.getElementById('cp-new').value;
+      const confirmVal = document.getElementById('cp-confirm').value;
+
+      const showResult = (msg, type) => {
+        cpResult.textContent = msg;
+        cpResult.className = `admin-panel-result ${type}`;
+      };
+
+      if (!currentVal || !newVal || !confirmVal) {
+        showResult('请填写所有密码字段。', 'error'); return;
+      }
+      if (newVal !== confirmVal) {
+        showResult('两次输入的新密码不一致，请检查。', 'error'); return;
+      }
+      if (newVal.length < 6) {
+        showResult('新密码至少需要 6 位，建议使用更强的密码。', 'error'); return;
+      }
+
+      const currentHash = await hashPassword(currentVal);
+      if (currentHash !== ADMIN_PASSWORD_HASH) {
+        showResult('当前密码错误，无法修改。', 'error'); return;
+      }
+
+      const newHash = await hashPassword(newVal);
+      localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
+      ADMIN_PASSWORD_HASH = newHash;
+      changePasswordForm.reset();
+      showResult('密码修改成功！新密码已保存到当前浏览器。', 'success');
+    });
+  }
+
+  // ==========================================================================
+  // 10. 针对 Cloudflare Pages 的配置导出系统 (data.js Download compiler)
   // ==========================================================================
 
   const sidebarExportBtn = document.getElementById('sidebar-export-config');

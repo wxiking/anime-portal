@@ -1450,6 +1450,74 @@ body {
    自适应响应式媒体查询 (Responsive Media Queries)
    ========================================================================== */
 
+/* 筛选栏滚动包装器（手机端显示右侧渐隐提示） */
+.filter-tabs-wrapper {
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* 后台面板区块（修改密码 / 联系方式） */
+.admin-panel-section {
+  flex-grow: 1;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.5rem;
+}
+.admin-panel-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--glass-border-hover);
+  border-radius: 20px;
+  padding: 2rem 2.5rem 2.5rem;
+  width: 100%;
+  max-width: 540px;
+}
+.admin-panel-card h3 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--color-sakura);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.admin-panel-hint {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+  line-height: 1.5;
+}
+.admin-panel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.admin-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+.admin-panel-result {
+  font-size: 0.88rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  display: none;
+}
+.admin-panel-result.success {
+  display: block;
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  color: var(--color-online);
+}
+.admin-panel-result.error {
+  display: block;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  color: var(--color-maintain);
+}
+
 @media (max-width: 1024px) {
   .portal-grid {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -1494,10 +1562,31 @@ body {
     overflow-x: auto;
     white-space: nowrap;
     padding: 0.25rem;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 179, 198, 0.45) transparent;
   }
   .portal-filter-tabs::-webkit-scrollbar {
-    display: none;
+    display: block;
+    height: 3px;
+  }
+  .portal-filter-tabs::-webkit-scrollbar-thumb {
+    background: rgba(255, 179, 198, 0.45);
+    border-radius: 99px;
+  }
+  .portal-filter-tabs::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  /* 右侧渐隐提示：告知用户可以横向滚动 */
+  .filter-tabs-wrapper::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 4px;
+    width: 36px;
+    background: linear-gradient(to right, transparent, rgba(10, 9, 30, 0.85));
+    pointer-events: none;
+    z-index: 1;
   }
   
   .modal-content {
@@ -1651,5 +1740,9 @@ body {
   .admin-glass-table th:nth-child(4),
   .admin-glass-table td:nth-child(4) {
     display: none;
+  }
+  .admin-panel-card {
+    padding: 1.5rem 1rem 2rem;
+    border-radius: 14px;
   }
 }
