@@ -1,0 +1,802 @@
+/**
+ * 二次元动漫毛玻璃个人门户与后台管理系统 - 核心逻辑控制器
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+  // ==========================================================================
+  // 1. 梦幻二次元背景特效初始化 (落樱与闪烁群星)
+  // ==========================================================================
+  
+  function initAnimeBackdrop() {
+    const starContainer = document.querySelector('.star-container');
+    const sakuraContainer = document.querySelector('.sakura-container');
+
+    // 随机渲染 40 颗闪烁星星
+    for (let i = 0; i < 40; i++) {
+      const star = document.createElement('div');
+      star.className = 'twinkle-star';
+      const size = Math.random() * 3 + 1; // 1px - 4px
+      star.style.width = `${size}px`;
+      star.style.height = `${size}px`;
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.animationDelay = `${Math.random() * 5}s`;
+      star.style.animationDuration = `${Math.random() * 4 + 2}s`;
+      starContainer.appendChild(star);
+    }
+
+    // 动态渲染 25 片缓缓飘落的樱花瓣
+    for (let i = 0; i < 25; i++) {
+      const petal = document.createElement('div');
+      petal.className = 'sakura-petal';
+      petal.style.left = `${Math.random() * 100}%`;
+      petal.style.top = `${Math.random() * -10}%`;
+      
+      const size = Math.random() * 12 + 6; // 6px - 18px
+      petal.style.width = `${size}px`;
+      petal.style.height = `${size}px`;
+      
+      petal.style.animationDelay = `${Math.random() * 10}s`;
+      petal.style.animationDuration = `${Math.random() * 8 + 8}s`; // 8s - 16s 飘落时间
+      sakuraContainer.appendChild(petal);
+    }
+  }
+  
+  initAnimeBackdrop();
+
+  // ==========================================================================
+  // 2. 数据仓库同步系统 (LocalStorage CRUD)
+  // ==========================================================================
+
+  let websites = [];
+  const STORAGE_KEY = 'anime_websites_portal_data';
+  const ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
+
+  async function hashPassword(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function escapeHTML(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function isSafeURL(url) {
+    try {
+      const u = new URL(url);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }
+
+  function loadData() {
+    const localData = localStorage.getItem(STORAGE_KEY);
+    if (localData) {
+      try {
+        websites = JSON.parse(localData);
+      } catch (e) {
+        console.error("加载本地存储失败，读取默认配置", e);
+        websites = [...initialWebsitesData];
+      }
+    } else {
+      websites = [...initialWebsitesData];
+      saveData();
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(websites));
+  }
+
+  loadData();
+
+  // ==========================================================================
+  // 3. 前端展示门户渲染与交互 (Frontend Portal Controller)
+  // ==========================================================================
+
+  const portalGrid = document.getElementById('portal-grid');
+  const searchInput = document.getElementById('portal-search-input');
+  const filterTabs = document.querySelectorAll('.portal-filter-tab');
+  const emptyState = document.getElementById('empty-state');
+  
+  let currentCategory = 'all';
+  let searchQuery = '';
+
+  // 动态创建 Lucide 图标的简单 SVG 映射器 (免去载入巨大库，保证绝对秒开)
+  const iconSVGMap = {
+    'book-open': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+    'code': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    'palette': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"/><circle cx="7.5" cy="10.5" r="1.5"/><circle cx="11.5" cy="7.5" r="1.5"/><circle cx="16.5" cy="9.5" r="1.5"/><circle cx="15.5" cy="14.5" r="1.5"/></svg>',
+    'gamepad-2': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="3"/></svg>',
+    'book': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>',
+    'folder': '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>'
+  };
+
+  function getSVGIcon(key) {
+    return iconSVGMap[key] || iconSVGMap['folder'];
+  }
+
+  function renderPortalCards() {
+    portalGrid.innerHTML = '';
+    
+    // 联合筛选数据
+    const filtered = websites.filter(site => {
+      const matchesCategory = currentCategory === 'all' || site.category === currentCategory;
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch = !query ||
+        site.name.toLowerCase().includes(query) ||
+        site.description.toLowerCase().includes(query) ||
+        (site.tags || []).some(t => t.toLowerCase().includes(query));
+      return matchesCategory && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+      emptyState.style.display = 'flex';
+      return;
+    } else {
+      emptyState.style.display = 'none';
+    }
+
+    filtered.forEach((site, index) => {
+      const card = document.createElement('article');
+      card.className = 'portal-card';
+      card.style.animationDelay = `${index * 0.08}s`;
+
+      const cardMeta = `
+        <div class="card-meta-row">
+          <span class="card-category-tag">${escapeHTML(site.categoryName)}</span>
+          <div class="card-status ${escapeHTML(site.status)}">
+            <span class="card-status-dot"></span>
+            <span>${escapeHTML(site.statusText)}</span>
+          </div>
+        </div>
+      `;
+
+      const cardBody = `
+        <div>
+          <div class="card-title-row">
+            <div class="card-icon-box">${getSVGIcon(site.icon)}</div>
+            <h3 class="portal-card-title">${escapeHTML(site.name)}</h3>
+          </div>
+          <p class="portal-card-desc">${escapeHTML(site.description)}</p>
+        </div>
+      `;
+
+      const tagsHTML = (site.tags || []).slice(0, 3).map(t => `<span class="card-tag-badge">${escapeHTML(t)}</span>`).join('');
+      const cardFooter = `
+        <div class="card-bottom-row">
+          <div class="card-tag-badges">${tagsHTML}</div>
+          <button class="card-arrow-btn" aria-label="查看详情">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      `;
+
+      card.innerHTML = cardMeta + cardBody + cardFooter;
+
+      // 绑定鼠标滑动霓虹跟随光晕特效
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+
+      // 绑定卡片点击展示详情弹窗事件
+      card.addEventListener('click', () => {
+        openDetailModal(site);
+      });
+
+      portalGrid.appendChild(card);
+    });
+  }
+
+  // 前台筛选与搜索事件监听
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderPortalCards();
+    });
+  }
+
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      filterTabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      currentCategory = tab.getAttribute('data-category');
+      renderPortalCards();
+    });
+  });
+
+  renderPortalCards();
+
+  // ==========================================================================
+  // 4. 前端详情弹窗逻辑 (Details Modal Control)
+  // ==========================================================================
+
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const modalGlowBg = document.getElementById('modal-glow-bg');
+  const modalTitle = document.getElementById('modal-title');
+  const modalStatus = document.getElementById('modal-status');
+  const modalDescription = document.getElementById('modal-description');
+  const modalFeaturesList = document.getElementById('modal-features-list');
+  const modalBtnSecondary = document.getElementById('modal-btn-secondary');
+  const modalBtnPrimary = document.getElementById('modal-btn-primary');
+
+  function openDetailModal(site) {
+    modalGlowBg.style.background = site.bgGradient;
+    modalTitle.textContent = site.name;
+    modalStatus.className = `card-status ${escapeHTML(site.status)}`;
+    modalStatus.innerHTML = `<span class="card-status-dot"></span><span>${escapeHTML(site.statusText)}</span>`;
+    modalDescription.textContent = site.detailedDescription;
+
+    modalFeaturesList.innerHTML = '';
+    (site.features || []).forEach(feat => {
+      const li = document.createElement('li');
+      li.className = 'feature-item';
+      li.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span>${escapeHTML(feat)}</span>
+      `;
+      modalFeaturesList.appendChild(li);
+    });
+
+    modalBtnPrimary.href = isSafeURL(site.url) ? site.url : '#';
+    
+    // 一键复制地址交互
+    modalBtnSecondary.onclick = (e) => {
+      e.preventDefault();
+      navigator.clipboard.writeText(site.url).then(() => {
+        const originalText = modalBtnSecondary.innerHTML;
+        modalBtnSecondary.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 复制成功`;
+        modalBtnSecondary.style.borderColor = 'var(--color-online)';
+        modalBtnSecondary.style.color = 'var(--color-online)';
+        setTimeout(() => {
+          modalBtnSecondary.innerHTML = originalText;
+          modalBtnSecondary.style.borderColor = '';
+          modalBtnSecondary.style.color = '';
+        }, 2000);
+      });
+    };
+
+    modalOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDetailModal() {
+    modalOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeDetailModal);
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeDetailModal();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (modalOverlay && modalOverlay.classList.contains('active')) closeDetailModal();
+    if (loginOverlay && loginOverlay.classList.contains('active')) {
+      loginOverlay.classList.remove('active');
+      passwordInput.value = '';
+    }
+  });
+
+  // ==========================================================================
+  // 5. 二次元管理登录系统 (Consistent Admin Login verification)
+  // ==========================================================================
+
+  const adminLockBtn = document.getElementById('admin-lock-btn');
+  const loginOverlay = document.getElementById('login-overlay');
+  const loginCloseBtn = document.getElementById('login-close-corner');
+  const loginForm = document.getElementById('login-form');
+  const passwordInput = document.getElementById('admin-password');
+  
+  const portalWrapper = document.querySelector('.portal-wrapper');
+  const adminWrapper = document.querySelector('.admin-wrapper');
+
+  if (adminLockBtn) {
+    adminLockBtn.addEventListener('click', () => {
+      loginOverlay.classList.add('active');
+      passwordInput.focus();
+    });
+  }
+
+  if (loginCloseBtn) {
+    loginCloseBtn.addEventListener('click', () => {
+      loginOverlay.classList.remove('active');
+      passwordInput.value = '';
+    });
+  }
+
+  let loginFailCount = 0;
+  let loginLockedUntil = 0;
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (Date.now() < loginLockedUntil) {
+        const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
+        alert(`登录已暂时锁定，请 ${remaining} 秒后重试。`);
+        return;
+      }
+
+      const enteredPassword = passwordInput.value;
+      const hash = await hashPassword(enteredPassword);
+      if (hash === ADMIN_PASSWORD_HASH) {
+        loginFailCount = 0;
+        // 登录成功：无刷新切入后台控制台
+        loginOverlay.classList.remove('active');
+        passwordInput.value = '';
+
+        // 前台淡出，后台淡入
+        portalWrapper.style.opacity = '0';
+        setTimeout(() => {
+          portalWrapper.style.display = 'none';
+          adminWrapper.style.display = 'flex';
+          setTimeout(() => {
+            adminWrapper.classList.add('active');
+            initAdminDashboard();
+          }, 50);
+        }, 500);
+      } else {
+        loginFailCount++;
+        if (loginFailCount >= 5) {
+          loginLockedUntil = Date.now() + 30 * 1000;
+          loginFailCount = 0;
+          alert('连续错误次数过多，账号已锁定 30 秒。');
+        }
+        // 密码错误微抖动提示
+        passwordInput.style.borderColor = 'var(--color-maintain)';
+        passwordInput.style.animation = 'shake 0.4s ease';
+        setTimeout(() => {
+          passwordInput.style.animation = '';
+        }, 400);
+      }
+    });
+  }
+
+  // 退出登录，切回前台
+  const sidebarLogoutBtn = document.getElementById('sidebar-logout');
+  if (sidebarLogoutBtn) {
+    sidebarLogoutBtn.addEventListener('click', () => {
+      closeAdminEditPanel(); // 关闭可能打开的并排编辑
+      adminWrapper.classList.remove('active');
+      setTimeout(() => {
+        adminWrapper.style.display = 'none';
+        portalWrapper.style.display = 'flex';
+        setTimeout(() => {
+          portalWrapper.style.opacity = '1';
+          renderPortalCards(); // 重绘前台卡片，确保后台改动实时更新
+        }, 50);
+      }, 500);
+    });
+  }
+
+  // ==========================================================================
+  // 6. 全屏平铺式后台管理面板核心控制 (Admin Dashboard Panel)
+  // ==========================================================================
+
+  const adminTableBody = document.getElementById('admin-table-body');
+  const adminSearchInput = document.getElementById('admin-search-input');
+  const adminCategorySelect = document.getElementById('admin-category-select');
+  const adminSplitBox = document.getElementById('admin-split-box');
+  const sidebarWebsitesBtn = document.getElementById('sidebar-websites');
+  const sidebarAddNewBtn = document.getElementById('sidebar-add-new');
+
+  // 后台分页及检索状态
+  let adminSearchQuery = '';
+  let adminCurrentCategory = 'all';
+  let adminCurrentPage = 1;
+  const adminItemsPerPage = 6; // 每页显示 6 条，防止无限下拉
+
+  function initAdminDashboard() {
+    adminCurrentPage = 1;
+    renderAdminTable();
+  }
+
+  function getFilteredAdminData() {
+    return websites.filter(site => {
+      const matchesCategory = adminCurrentCategory === 'all' || site.category === adminCurrentCategory;
+      const query = adminSearchQuery.toLowerCase().trim();
+      return matchesCategory && (!query || 
+        site.name.toLowerCase().includes(query) ||
+        site.url.toLowerCase().includes(query)
+      );
+    });
+  }
+
+  function renderAdminTable() {
+    adminTableBody.innerHTML = '';
+    const filtered = getFilteredAdminData();
+    
+    // 计算分页
+    const totalPages = Math.ceil(filtered.length / adminItemsPerPage) || 1;
+    if (adminCurrentPage > totalPages) adminCurrentPage = totalPages;
+
+    const startIdx = (adminCurrentPage - 1) * adminItemsPerPage;
+    const paginatedData = filtered.slice(startIdx, startIdx + adminItemsPerPage);
+
+    if (paginatedData.length === 0) {
+      adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">没有星群节点数据</td></tr>';
+      updatePaginationControls(1, 1);
+      return;
+    }
+
+    paginatedData.forEach(site => {
+      const tr = document.createElement('tr');
+      const safeHref = isSafeURL(site.url) ? escapeHTML(site.url) : '#';
+      tr.innerHTML = `
+        <td style="width: 60px; text-align: center;">
+          <div class="card-icon-box" style="width: 32px; height: 32px; margin: 0 auto;">${getSVGIcon(site.icon)}</div>
+        </td>
+        <td class="table-site-name">${escapeHTML(site.name)}</td>
+        <td><a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="table-url-link">${escapeHTML(site.url)}</a></td>
+        <td>
+          <div class="card-status ${escapeHTML(site.status)}" style="background: transparent; border: none; padding: 0;">
+            <span class="card-status-dot"></span>
+            <span>${escapeHTML(site.statusText)}</span>
+          </div>
+        </td>
+        <td style="width: 100px;">
+          <div class="table-action-btn-row">
+            <button class="table-action-btn edit-trigger" data-id="${site.id}" title="并排编辑">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </button>
+            <button class="table-action-btn delete delete-trigger" data-id="${site.id}" title="删除节点">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+            </button>
+          </div>
+        </td>
+      `;
+
+      // 绑定编辑事件 (开启并排联动分栏，零遮挡操作)
+      tr.querySelector('.edit-trigger').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAdminEditPanel(site);
+      });
+
+      // 绑定删除事件
+      tr.querySelector('.delete-trigger').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`确认要删除网站 [${site.name}] 吗？此操作不可逆。`)) {
+          deleteWebsite(site.id);
+        }
+      });
+
+      adminTableBody.appendChild(tr);
+    });
+
+    updatePaginationControls(adminCurrentPage, totalPages);
+  }
+
+  // 后台检索与下拉过滤事件
+  if (adminSearchInput) {
+    adminSearchInput.addEventListener('input', (e) => {
+      adminSearchQuery = e.target.value;
+      adminCurrentPage = 1;
+      renderAdminTable();
+    });
+  }
+
+  if (adminCategorySelect) {
+    adminCategorySelect.addEventListener('change', (e) => {
+      adminCurrentCategory = e.target.value;
+      adminCurrentPage = 1;
+      renderAdminTable();
+    });
+  }
+
+  // 分页器逻辑
+  const prevPageBtn = document.getElementById('prev-page-btn');
+  const nextPageBtn = document.getElementById('next-page-btn');
+  const paginationInfo = document.getElementById('pagination-info');
+
+  function updatePaginationControls(current, total) {
+    if (prevPageBtn) prevPageBtn.disabled = current <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = current >= total;
+    if (paginationInfo) paginationInfo.textContent = `第 ${current} / ${total} 页`;
+  }
+
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', () => {
+      if (adminCurrentPage > 1) {
+        adminCurrentPage--;
+        renderAdminTable();
+      }
+    });
+  }
+
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', () => {
+      const filtered = getFilteredAdminData();
+      const totalPages = Math.ceil(filtered.length / adminItemsPerPage);
+      if (adminCurrentPage < totalPages) {
+        adminCurrentPage++;
+        renderAdminTable();
+      }
+    });
+  }
+
+  // ==========================================================================
+  // 7. 并排无遮挡编辑与数据同步系统 (Side-by-Side Edit & LocalStorage sync)
+  // ==========================================================================
+
+  const editCloseBtn = document.getElementById('edit-close-btn');
+  const editPanelTitle = document.getElementById('edit-panel-title');
+  const editSiteForm = document.getElementById('edit-site-form');
+  
+  const formSiteId = document.getElementById('form-site-id');
+  const formSiteName = document.getElementById('form-site-name');
+  const formSiteUrl = document.getElementById('form-site-url');
+  const formSiteCategory = document.getElementById('form-site-category');
+  const formSiteIcon = document.getElementById('form-site-icon');
+  const formSiteStatus = document.getElementById('form-site-status');
+  const formSiteDesc = document.getElementById('form-site-desc');
+  const formSiteDetail = document.getElementById('form-site-detail');
+  
+  const tagEditorBox = document.getElementById('tag-editor-box');
+  const newTagInput = document.getElementById('new-tag-input');
+  
+  let currentEditingTags = [];
+
+  function openAdminEditPanel(site) {
+    // 填充表单数据
+    formSiteId.value = site.id;
+    formSiteName.value = site.name;
+    formSiteUrl.value = site.url;
+    formSiteCategory.value = site.category;
+    formSiteIcon.value = site.icon;
+    formSiteStatus.value = site.status;
+    formSiteDesc.value = site.description;
+    formSiteDetail.value = site.detailedDescription;
+    
+    // 标题文字微调整
+    editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> 编辑星群节点: ${escapeHTML(site.name)}`;
+    
+    // 初始化标签数组与编辑器渲染
+    currentEditingTags = [...(site.tags || [])];
+    renderInteractiveTags();
+
+    // 激活并排弹性收缩联动分栏 (左表收至60%，右表单展开40%，绝不发生层级遮挡)
+    adminSplitBox.classList.add('edit-active');
+  }
+
+  function renderInteractiveTags() {
+    tagEditorBox.innerHTML = '';
+    currentEditingTags.forEach((tag, idx) => {
+      const tagBadge = document.createElement('span');
+      tagBadge.className = 'editor-tag-badge';
+      tagBadge.innerHTML = `
+        <span>${escapeHTML(tag)}</span>
+        <span class="tag-delete-cross" data-idx="${idx}">&times;</span>
+      `;
+      
+      // 绑定标签点击删除逻辑
+      tagBadge.querySelector('.tag-delete-cross').addEventListener('click', () => {
+        currentEditingTags.splice(idx, 1);
+        renderInteractiveTags();
+      });
+      
+      tagEditorBox.appendChild(tagBadge);
+    });
+
+    // 重新附加上输入框
+    tagEditorBox.appendChild(newTagInput);
+    newTagInput.focus();
+  }
+
+  // 标签框回车添加逻辑
+  if (newTagInput) {
+    newTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const tagValue = newTagInput.value.trim();
+        if (tagValue && !currentEditingTags.includes(tagValue)) {
+          currentEditingTags.push(tagValue);
+          newTagInput.value = '';
+          renderInteractiveTags();
+        }
+      }
+    });
+  }
+
+  function closeAdminEditPanel() {
+    adminSplitBox.classList.remove('edit-active');
+    editSiteForm.reset();
+    formSiteId.value = '';
+    currentEditingTags = [];
+  }
+
+  if (editCloseBtn) editCloseBtn.addEventListener('click', closeAdminEditPanel);
+
+  // 侧边栏按钮切换功能逻辑
+  if (sidebarWebsitesBtn) {
+    sidebarWebsitesBtn.addEventListener('click', () => {
+      sidebarWebsitesBtn.classList.add('active');
+      sidebarAddNewBtn.classList.remove('active');
+      closeAdminEditPanel();
+    });
+  }
+
+  // 侧栏一键“新添节点”表单调起 (同样采用联动分栏模式)
+  if (sidebarAddNewBtn) {
+    sidebarAddNewBtn.addEventListener('click', () => {
+      sidebarAddNewBtn.classList.add('active');
+      sidebarWebsitesBtn.classList.remove('active');
+      
+      // 初始化空数据表单
+      formSiteId.value = 'new';
+      formSiteName.value = '';
+      formSiteUrl.value = '';
+      formSiteCategory.value = 'blog';
+      formSiteIcon.value = 'folder';
+      formSiteStatus.value = 'online';
+      formSiteDesc.value = '';
+      formSiteDetail.value = '';
+      
+      editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 新添星群节点`;
+      currentEditingTags = ["Vite", "Cloudflare"];
+      renderInteractiveTags();
+
+      // 打开并排栏
+      adminSplitBox.classList.add('edit-active');
+    });
+  }
+
+  // 提交修改/添加逻辑
+  if (editSiteForm) {
+    editSiteForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const idVal = formSiteId.value;
+      const siteName = formSiteName.value.trim();
+      const siteUrl = formSiteUrl.value.trim();
+      const siteCategory = formSiteCategory.value;
+      const siteIcon = formSiteIcon.value;
+      const siteStatus = formSiteStatus.value;
+      const siteDesc = formSiteDesc.value.trim();
+      const siteDetail = formSiteDetail.value.trim();
+
+      if (!siteName || !siteUrl) {
+        alert("请输入网站名称与链接！");
+        return;
+      }
+
+      if (!isSafeURL(siteUrl)) {
+        alert("请输入有效的 HTTP 或 HTTPS 链接地址！");
+        return;
+      }
+
+      // 获取状态显示文字
+      const statusTextMap = {
+        'online': '运行中',
+        'beta': '公测中',
+        'maintain': '维护中',
+        'coming': '筹备中'
+      };
+
+      // 获取随机的漂亮毛玻璃渐变以作弹窗高光
+      const gradients = [
+        "linear-gradient(135deg, rgba(200, 182, 255, 0.25) 0%, rgba(255, 179, 198, 0.25) 100%)",
+        "linear-gradient(135deg, rgba(179, 229, 252, 0.25) 0%, rgba(200, 182, 255, 0.25) 100%)",
+        "linear-gradient(135deg, rgba(255, 202, 212, 0.25) 0%, rgba(255, 230, 240, 0.25) 100%)",
+        "linear-gradient(135deg, rgba(255, 202, 212, 0.25) 0%, rgba(179, 229, 252, 0.25) 100%)"
+      ];
+      const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+
+      const categoryNameMap = {
+        'ai': 'AI 智脑',
+        'blog': '技术博客',
+        'code': '开源仓库',
+        'art': '艺术空间',
+        'game': '游戏世界'
+      };
+
+      if (idVal === 'new') {
+        // 创建新网站
+        const newSite = {
+          id: Date.now(), // 随机唯一ID
+          name: siteName,
+          url: siteUrl,
+          description: siteDesc,
+          detailedDescription: siteDetail || siteDesc,
+          category: siteCategory,
+          categoryName: categoryNameMap[siteCategory] || '实用工具',
+          icon: siteIcon,
+          tags: currentEditingTags.length > 0 ? currentEditingTags : ["Web"],
+          status: siteStatus,
+          statusText: statusTextMap[siteStatus],
+          bgGradient: randomGradient,
+          features: [
+            "一键极速加载访问",
+            "二次元毛玻璃磨砂交互面板",
+            "零服务器 Cloudflare Pages 完美运行"
+          ]
+        };
+        websites.push(newSite);
+      } else {
+        // 编辑已有网站
+        const targetId = parseInt(idVal, 10);
+        const siteIdx = websites.findIndex(s => s.id === targetId);
+        if (siteIdx !== -1) {
+          websites[siteIdx] = {
+            ...websites[siteIdx],
+            name: siteName,
+            url: siteUrl,
+            description: siteDesc,
+            detailedDescription: siteDetail || siteDesc,
+            category: siteCategory,
+            categoryName: categoryNameMap[siteCategory] || '实用工具',
+            icon: siteIcon,
+            tags: currentEditingTags,
+            status: siteStatus,
+            statusText: statusTextMap[siteStatus]
+          };
+        }
+      }
+
+      saveData();
+      closeAdminEditPanel();
+      renderAdminTable();
+      
+      // 重置侧边栏高亮
+      if (sidebarWebsitesBtn) {
+        sidebarWebsitesBtn.classList.add('active');
+        sidebarAddNewBtn.classList.remove('active');
+      }
+
+      alert("节点保存成功！数据已实时写入您的本地浏览器缓存。");
+    });
+  }
+
+  // 删除网站节点
+  function deleteWebsite(id) {
+    websites = websites.filter(s => s.id !== id);
+    saveData();
+    renderAdminTable();
+    closeAdminEditPanel();
+    alert("节点已成功移除！");
+  }
+
+  // ==========================================================================
+  // 8. 针对 Cloudflare Pages 的配置导出系统 (data.js Download compiler)
+  // ==========================================================================
+
+  const sidebarExportBtn = document.getElementById('sidebar-export-config');
+
+  if (sidebarExportBtn) {
+    sidebarExportBtn.addEventListener('click', () => {
+      // 编译成格式规范的 data.js 文件字符
+      const fileHeader = `/**\n * 二次元动漫毛玻璃个人门户 - 网站集群数据配置文件\n * \n * 本文件由后台系统于 ${new Date().toLocaleString()} 自动编译导出。\n * 请将本文件直接覆盖掉您本地的 js/data.js，然后上传推送到 Cloudflare 即可实现永久免费发布！\n */\n\n`;
+      const fileContent = `const initialWebsitesData = ${JSON.stringify(websites, null, 2)};\n`;
+      
+      const blob = new Blob([fileHeader + fileContent], { type: 'application/javascript;charset=utf-8' });
+      
+      // 创建隐藏下载锚点触发下载
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'data.js';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      alert("恭喜！最新的网站集群配置 `data.js` 文件已在您的浏览器中完成编译并成功触发下载。\n\n部署指南：\n1. 请将下载的 data.js 覆盖掉本地 html 项目中的 js/data.js。\n2. 重新上传或 Git 推送到 Cloudflare Pages 上。\n\n这能保证您的门户 100% 免费运行，无任何第三方云数据库的高昂开销和泄露隐患！");
+    });
+  }
+
+});
