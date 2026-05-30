@@ -100,8 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applySiteSettings(s) {
+    const name = s.siteName || DEFAULT_SITE_SETTINGS.siteName;
+    document.title = document.title.replace(/^[^|｜]+/, name + ' ');
+
     const logoTitle = document.getElementById('site-name-display');
-    if (logoTitle) logoTitle.textContent = s.siteName || DEFAULT_SITE_SETTINGS.siteName;
+    if (logoTitle) logoTitle.textContent = name;
 
     const authorName = document.getElementById('author-name-display');
     if (authorName) authorName.textContent = s.authorName || DEFAULT_SITE_SETTINGS.authorName;
