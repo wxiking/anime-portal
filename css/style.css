@@ -1656,18 +1656,6 @@ body {
   .portal-filter-tab {
     flex-shrink: 0;
   }
-  /* 右侧渐隐提示：提示用户可横向滑动 */
-  .filter-tabs-wrapper::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 3px;
-    width: 40px;
-    background: linear-gradient(to right, transparent, rgba(10, 9, 30, 0.9));
-    pointer-events: none;
-    z-index: 2;
-  }
   
   .modal-content {
     padding: 1.75rem;
