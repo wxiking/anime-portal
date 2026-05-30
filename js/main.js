@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
   const CATEGORIES_KEY = 'portalCategories';
   const SITE_SETTINGS_KEY = 'portalSiteSettings';
+  const API_URL = '/api/data';
+  let _adminPassword = null;
+  let _adminLoggedIn = false;
+
   const DEFAULT_SITE_SETTINGS = {
     siteName: '流光星野',
     authorName: '星野流光',
@@ -326,6 +330,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadData();
 
+  async function syncToWorker() {
+    if (!_adminPassword) return;
+    try {
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_adminPassword}` },
+        body: JSON.stringify({
+          websites,
+          categories,
+          contactInfo: loadContactInfo(),
+          siteSettings: loadSiteSettings()
+        })
+      });
+      if (!r.ok) {
+        if (r.status === 401) showToast('云端同步失败：认证过期，请重新登录。', 'error');
+        else showToast('云端同步失败，数据已保存到本地。', 'error');
+      }
+    } catch {
+      showToast('网络异常，数据已保存在本地，联网后重试。', 'error');
+    }
+  }
+
+  async function fetchAndApplyWorkerData() {
+    try {
+      const r = await fetch(API_URL, { cache: 'no-cache' });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!data) return;
+      let changed = false;
+      if (Array.isArray(data.websites)) { websites = data.websites; saveData(); changed = true; }
+      if (Array.isArray(data.categories)) { categories = data.categories; saveCategories(categories); changed = true; }
+      if (data.contactInfo && typeof data.contactInfo === 'object') {
+        localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(data.contactInfo));
+        applyContactInfoToDOM(data.contactInfo);
+      }
+      if (data.siteSettings && typeof data.siteSettings === 'object') {
+        localStorage.setItem(SITE_SETTINGS_KEY, JSON.stringify(data.siteSettings));
+        applySiteSettings(data.siteSettings);
+      }
+      if (changed) {
+        renderFilterTabs();
+        renderPortalCards();
+        if (isAdminPage && _adminLoggedIn) { populateCategoryDropdowns(); renderAdminTable(); }
+      }
+    } catch { /* 离线或 KV 尚未配置，静默使用本地缓存 */ }
+  }
+
   // ==========================================================================
   // 3. 前端展示门户渲染与交互 (Frontend Portal Controller)
   // ==========================================================================
@@ -437,6 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 动态渲染筛选标签并绑定事件
   renderFilterTabs();
   renderPortalCards();
+  fetchAndApplyWorkerData();
 
   // ==========================================================================
   // 4. 前端详情弹窗逻辑 (Details Modal Control)
@@ -544,6 +596,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const enteredPassword = passwordInput.value;
         const hash = await hashPassword(enteredPassword);
         if (hash === ADMIN_PASSWORD_HASH) {
+          _adminPassword = enteredPassword;
+          _adminLoggedIn = true;
           loginFailCount = 0;
           loginOverlay.classList.remove('active');
           passwordInput.value = '';
@@ -717,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       saveSiteSettings(settings);
       applySiteSettings(settings);
+      syncToWorker();
       showToast('基础设置已保存！');
     });
   }
@@ -1071,6 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       saveData();
+      syncToWorker();
       closeAdminEditPanel();
       renderAdminTable();
 
@@ -1085,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function deleteWebsite(id) {
     websites = websites.filter(s => s.id !== id);
     saveData();
+    syncToWorker();
     renderAdminTable();
     closeAdminEditPanel();
     showToast('已删除！');
@@ -1119,6 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showConfirm(`确认删除分类「${cat.name}」吗？该分类下的网站不会被删除，仍在「全部」中显示。`, () => {
           categories.splice(idx, 1);
           saveCategories(categories);
+          syncToWorker();
           renderCategoriesList();
           populateCategoryDropdowns();
           renderFilterTabs();
@@ -1139,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const id = 'cat_' + Date.now();
       categories.push({ id, name });
       saveCategories(categories);
+      syncToWorker();
       nameInput.value = '';
       renderCategoriesList();
       populateCategoryDropdowns();
@@ -1173,7 +1232,8 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
       applyContactInfoToDOM(info);
-      showToast('联系方式已保存，前台已实时更新！');
+      syncToWorker();
+      showToast('联系方式已保存！');
     });
   }
 
@@ -1278,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      showToast('配置已导出！替换 js/portal-export.js 后推送到 GitHub 即可同步给所有访客。', 'info');
+      showToast('本地备份已导出！正常情况下后台修改会自动同步到云端，无需手动导出。', 'info');
     });
   }
 
