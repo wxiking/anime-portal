@@ -247,8 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderPortalCards() {
+    if (!portalGrid) return;
     portalGrid.innerHTML = '';
-    
+
     // 联合筛选数据
     const filtered = websites.filter(site => {
       const matchesCategory = currentCategory === 'all' || site.category === currentCategory;
@@ -261,10 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtered.length === 0) {
-      emptyState.style.display = 'flex';
+      if (emptyState) emptyState.style.display = 'flex';
       return;
     } else {
-      emptyState.style.display = 'none';
+      if (emptyState) emptyState.style.display = 'none';
     }
 
     filtered.forEach((site, index) => {
@@ -598,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginatedData = filtered.slice(startIdx, startIdx + adminItemsPerPage);
 
     if (paginatedData.length === 0) {
-      adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">没有星群节点数据</td></tr>';
+      adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">暂无网站数据</td></tr>';
       updatePaginationControls(1, 1);
       return;
     }
@@ -732,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formSiteDetail.value = site.detailedDescription;
     
     // 标题文字微调整
-    editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> 编辑星群节点: ${escapeHTML(site.name)}`;
+    editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> 编辑网站：${escapeHTML(site.name)}`;
     
     // 初始化标签数组与编辑器渲染
     currentEditingTags = [...(site.tags || [])];
@@ -815,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formSiteDesc.value = '';
       formSiteDetail.value = '';
       
-      editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 新添星群节点`;
+      editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 添加新网站`;
       currentEditingTags = ["Vite", "Cloudflare"];
       renderInteractiveTags();
 
@@ -918,7 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 重置侧边栏高亮
       showAdminSection('websites');
 
-      alert("节点保存成功！数据已实时写入您的本地浏览器缓存。");
+      alert("保存成功！");
     });
   }
 
@@ -928,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveData();
     renderAdminTable();
     closeAdminEditPanel();
-    alert("节点已成功移除！");
+    alert("已删除！");
   }
 
   // ==========================================================================
@@ -1113,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      alert("恭喜！最新的网站集群配置 `data.js` 文件已在您的浏览器中完成编译并成功触发下载。\n\n部署指南：\n1. 请将下载的 data.js 覆盖掉本地 html 项目中的 js/data.js。\n2. 重新上传或 Git 推送到 Cloudflare Pages 上。\n\n这能保证您的门户 100% 免费运行，无任何第三方云数据库的高昂开销和泄露隐患！");
+      alert("data.js 已下载！\n\n使用方法：\n1. 用下载的 data.js 替换本地项目里的 js/data.js\n2. 推送到 GitHub，Cloudflare 会自动重新部署");
     });
   }
 

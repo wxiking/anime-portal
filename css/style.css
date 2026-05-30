@@ -1675,9 +1675,6 @@ body {
     min-width: 0;
     flex-shrink: 1;
   }
-  .portal-control-bar {
-    overflow-x: hidden;
-  }
 
   /* 前台搜索框撑满 */
   .portal-search-wrapper {
