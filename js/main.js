@@ -475,6 +475,8 @@ document.addEventListener('DOMContentLoaded', () => {
           modalBtnSecondary.style.borderColor = '';
           modalBtnSecondary.style.color = '';
         }, 2000);
+      }).catch(() => {
+        showToast('复制失败，请手动复制链接。', 'error');
       });
     };
 
@@ -496,6 +498,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    const confirmOverlay = document.getElementById('custom-confirm-overlay');
+    if (confirmOverlay && confirmOverlay.classList.contains('active')) {
+      confirmOverlay.classList.remove('active');
+      return;
+    }
     if (modalOverlay && modalOverlay.classList.contains('active')) closeDetailModal();
   });
 
@@ -878,13 +885,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 初始化标签数组与编辑器渲染
     currentEditingTags = [...(site.tags || [])];
-    renderInteractiveTags();
+    renderInteractiveTags(false);
 
     // 激活并排弹性收缩联动分栏 (左表收至60%，右表单展开40%，绝不发生层级遮挡)
     adminSplitBox.classList.add('edit-active');
   }
 
-  function renderInteractiveTags() {
+  function renderInteractiveTags(autoFocus = false) {
     tagEditorBox.innerHTML = '';
     currentEditingTags.forEach((tag, idx) => {
       const tagBadge = document.createElement('span');
@@ -893,19 +900,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <span>${escapeHTML(tag)}</span>
         <span class="tag-delete-cross" data-idx="${idx}">&times;</span>
       `;
-      
+
       // 绑定标签点击删除逻辑
       tagBadge.querySelector('.tag-delete-cross').addEventListener('click', () => {
         currentEditingTags.splice(idx, 1);
-        renderInteractiveTags();
+        renderInteractiveTags(false);
       });
-      
+
       tagEditorBox.appendChild(tagBadge);
     });
 
     // 重新附加上输入框
     tagEditorBox.appendChild(newTagInput);
-    newTagInput.focus();
+    if (autoFocus) newTagInput.focus();
   }
 
   // 标签框回车添加逻辑
@@ -917,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tagValue && !currentEditingTags.includes(tagValue)) {
           currentEditingTags.push(tagValue);
           newTagInput.value = '';
-          renderInteractiveTags();
+          renderInteractiveTags(true);
         }
       }
     });
@@ -951,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formSiteId.value = 'new';
       formSiteName.value = '';
       formSiteUrl.value = '';
-      formSiteCategory.value = 'blog';
+      formSiteCategory.value = categories.length > 0 ? categories[0].id : '';
       formSiteIcon.value = 'folder';
       formSiteStatus.value = 'online';
       formSiteDesc.value = '';
@@ -959,7 +966,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       editPanelTitle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> 添加新网站`;
       currentEditingTags = ["Vite", "Cloudflare"];
-      renderInteractiveTags();
+      renderInteractiveTags(false);
 
       // 打开并排栏
       adminSplitBox.classList.add('edit-active');
