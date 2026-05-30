@@ -75,8 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadCategories() {
     const saved = localStorage.getItem(CATEGORIES_KEY);
-    try { return saved ? JSON.parse(saved) : [...DEFAULT_CATEGORIES]; }
-    catch { return [...DEFAULT_CATEGORIES]; }
+    const exportedDefault = (window.PORTAL_EXPORT && window.PORTAL_EXPORT.categories) || null;
+    try { return saved ? JSON.parse(saved) : (exportedDefault || [...DEFAULT_CATEGORIES]); }
+    catch { return exportedDefault || [...DEFAULT_CATEGORIES]; }
   }
 
   function saveCategories(cats) {
@@ -85,8 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSiteSettings() {
     const saved = localStorage.getItem(SITE_SETTINGS_KEY);
-    try { return saved ? JSON.parse(saved) : { ...DEFAULT_SITE_SETTINGS }; }
-    catch { return { ...DEFAULT_SITE_SETTINGS }; }
+    const exportedDefault = (window.PORTAL_EXPORT && window.PORTAL_EXPORT.siteSettings) || null;
+    try { return saved ? JSON.parse(saved) : (exportedDefault || { ...DEFAULT_SITE_SETTINGS }); }
+    catch { return exportedDefault || { ...DEFAULT_SITE_SETTINGS }; }
   }
 
   function saveSiteSettings(s) {
@@ -270,8 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadContactInfo() {
     const saved = localStorage.getItem(CONTACT_INFO_KEY);
-    try { return saved ? JSON.parse(saved) : { ...DEFAULT_CONTACT_INFO }; }
-    catch { return { ...DEFAULT_CONTACT_INFO }; }
+    const exportedDefault = (window.PORTAL_EXPORT && window.PORTAL_EXPORT.contactInfo) || null;
+    try { return saved ? JSON.parse(saved) : (exportedDefault || { ...DEFAULT_CONTACT_INFO }); }
+    catch { return exportedDefault || { ...DEFAULT_CONTACT_INFO }; }
   }
 
   function applyContactInfoToDOM(info) {
@@ -302,15 +305,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadData() {
     const localData = localStorage.getItem(STORAGE_KEY);
+    const exportedWebsites = (window.PORTAL_EXPORT && window.PORTAL_EXPORT.websites) || null;
+    const fallback = exportedWebsites || [...initialWebsitesData];
     if (localData) {
       try {
         websites = JSON.parse(localData);
       } catch (e) {
-        console.error("加载本地存储失败，读取默认配置", e);
-        websites = [...initialWebsitesData];
+        console.error("加载本地存储失败，读取导出配置", e);
+        websites = fallback;
       }
     } else {
-      websites = [...initialWebsitesData];
+      websites = fallback;
       saveData();
     }
   }
@@ -1251,24 +1256,29 @@ document.addEventListener('DOMContentLoaded', () => {
   if (sidebarExportBtn) {
     sidebarExportBtn.addEventListener('click', () => {
       closeMobileSidebar();
-      // 编译成格式规范的 data.js 文件字符
-      const fileHeader = `/**\n * 二次元动漫毛玻璃个人门户 - 网站集群数据配置文件\n * \n * 本文件由后台系统于 ${new Date().toLocaleString()} 自动编译导出。\n * 请将本文件直接覆盖掉您本地的 js/data.js，然后上传推送到 Cloudflare 即可实现永久免费发布！\n */\n\n`;
-      const fileContent = `const initialWebsitesData = ${JSON.stringify(websites, null, 2)};\n`;
-      
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        websites: websites,
+        categories: categories,
+        contactInfo: loadContactInfo(),
+        siteSettings: loadSiteSettings()
+      };
+
+      const fileHeader = `/**\n * 流光星野门户 - 完整导出配置\n * 导出时间：${new Date().toLocaleString()}\n *\n * 使用方法：\n * 1. 用此文件覆盖本地项目的 js/portal-export.js\n * 2. 推送到 GitHub → Cloudflare Pages 自动部署\n * 3. 所有访客立即看到最新内容（网站/分类/联系方式/基础设置全部同步）\n */\n\nvar PORTAL_EXPORT = `;
+      const fileContent = JSON.stringify(exportData, null, 2) + ';\n';
+
       const blob = new Blob([fileHeader + fileContent], { type: 'application/javascript;charset=utf-8' });
-      
-      // 创建隐藏下载锚点触发下载
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'data.js';
+      link.download = 'portal-export.js';
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      showToast('data.js 已下载！替换本地文件后推送到 GitHub 即可部署。', 'info');
+      showToast('配置已导出！替换 js/portal-export.js 后推送到 GitHub 即可同步给所有访客。', 'info');
     });
   }
 
