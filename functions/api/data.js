@@ -7,10 +7,17 @@
  * Environment secret:      ADMIN_HASH   (auto-set by GitHub Actions)
  */
 
+const SECURE_HEADERS = {
+  'Content-Type': 'application/json',
+  'Cache-Control': 'no-cache, no-store',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY'
+};
+
 function jsonResponse(data, status) {
   return new Response(JSON.stringify(data), {
     status: status || 200,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store' }
+    headers: SECURE_HEADERS
   });
 }
 
@@ -27,6 +34,15 @@ export async function onRequestGet({ env }) {
 
 export async function onRequestPost({ request, env }) {
   if (!env.PORTAL_DATA) return jsonResponse({ error: 'KV not configured' }, 503);
+
+  // IP-based rate limiting: max 15 POST attempts per minute
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rateKey = `_ratelimit:${ip}`;
+  try {
+    const current = parseInt(await env.PORTAL_DATA.get(rateKey) || '0', 10);
+    if (current >= 15) return jsonResponse({ error: 'Too many requests' }, 429);
+    await env.PORTAL_DATA.put(rateKey, String(current + 1), { expirationTtl: 60 });
+  } catch { /* KV error — allow request through rather than blocking */ }
 
   const auth = request.headers.get('Authorization') || '';
   const password = auth.startsWith('Bearer ') ? auth.slice(7) : '';
