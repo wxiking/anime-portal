@@ -367,6 +367,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 移动端汉堡菜单切换侧边栏
+  const adminMenuToggle = document.getElementById('admin-menu-toggle');
+  const adminSidebar = document.querySelector('.admin-sidebar');
+  const adminSidebarBackdrop = document.getElementById('admin-sidebar-backdrop');
+
+  function openMobileSidebar() {
+    adminSidebar.classList.add('mobile-active');
+    adminSidebarBackdrop.classList.add('active');
+  }
+  function closeMobileSidebar() {
+    adminSidebar.classList.remove('mobile-active');
+    adminSidebarBackdrop.classList.remove('active');
+  }
+
+  if (adminMenuToggle) {
+    adminMenuToggle.addEventListener('click', () => {
+      if (adminSidebar.classList.contains('mobile-active')) {
+        closeMobileSidebar();
+      } else {
+        openMobileSidebar();
+      }
+    });
+  }
+  if (adminSidebarBackdrop) {
+    adminSidebarBackdrop.addEventListener('click', closeMobileSidebar);
+  }
+
   // 退出登录，切回前台
   const sidebarLogoutBtn = document.getElementById('sidebar-logout');
   if (sidebarLogoutBtn) {
@@ -627,14 +654,16 @@ document.addEventListener('DOMContentLoaded', () => {
       sidebarWebsitesBtn.classList.add('active');
       sidebarAddNewBtn.classList.remove('active');
       closeAdminEditPanel();
+      closeMobileSidebar();
     });
   }
 
-  // 侧栏一键“新添节点”表单调起 (同样采用联动分栏模式)
+  // 侧栏一键”新添节点”表单调起 (同样采用联动分栏模式)
   if (sidebarAddNewBtn) {
     sidebarAddNewBtn.addEventListener('click', () => {
       sidebarAddNewBtn.classList.add('active');
       sidebarWebsitesBtn.classList.remove('active');
+      closeMobileSidebar();
       
       // 初始化空数据表单
       formSiteId.value = 'new';
@@ -778,6 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (sidebarExportBtn) {
     sidebarExportBtn.addEventListener('click', () => {
+      closeMobileSidebar();
       // 编译成格式规范的 data.js 文件字符
       const fileHeader = `/**\n * 二次元动漫毛玻璃个人门户 - 网站集群数据配置文件\n * \n * 本文件由后台系统于 ${new Date().toLocaleString()} 自动编译导出。\n * 请将本文件直接覆盖掉您本地的 js/data.js，然后上传推送到 Cloudflare 即可实现永久免费发布！\n */\n\n`;
       const fileContent = `const initialWebsitesData = ${JSON.stringify(websites, null, 2)};\n`;

@@ -121,7 +121,7 @@
         </button>
       </div>
 
-      <div class="admin-search-wrapper" style="min-width: 320px;">
+      <div class="admin-search-wrapper portal-search-wrapper">
         <svg class="admin-search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input type="text" id="portal-search-input" class="admin-search-input" placeholder="搜索网站名称、特色或标签..." aria-label="搜索网站">
       </div>
@@ -241,7 +241,12 @@
       
       <!-- 视口首行：仪表盘标题及过滤控制 -->
       <header class="admin-viewport-header">
-        <h2 class="admin-viewport-title">星群节点集群管理器</h2>
+        <div class="admin-header-left">
+          <button id="admin-menu-toggle" class="admin-menu-toggle" aria-label="展开侧边菜单">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <h2 class="admin-viewport-title">星群节点集群管理器</h2>
+        </div>
         
         <div class="admin-header-actions">
           <select id="admin-category-select" class="admin-category-select" aria-label="筛选分类">
@@ -372,6 +377,9 @@
       </section>
 
     </main>
+
+    <!-- 移动端侧边栏遮罩 -->
+    <div id="admin-sidebar-backdrop" class="admin-sidebar-backdrop"></div>
 
   </div>
 
