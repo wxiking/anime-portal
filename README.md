@@ -1,224 +1,218 @@
-# 流光星野 · 二次元毛玻璃个人门户
+# 🌸 二次元毛玻璃个人导航门户
 
-一个以动漫美学为核心、支持后台实时同步的个人网站导航门户。完全静态，零服务器，免费部署在 Cloudflare Pages。后台修改数据后，所有访客即时看到最新内容，无需手动导出或重新部署。
+一个免费、开源的个人网站导航页，拥有动漫风毛玻璃界面、落樱粒子特效，以及完整的后台管理系统。
 
-## 功能特性
+**核心优势：** 在后台修改内容后，所有访客无需等待，刷新页面即可看到最新数据——完全不需要手动导出文件或重新部署。
 
-- **毛玻璃 + 动漫风** — 落樱粒子、闪烁星空、霓虹光晕卡片
-- **全后台管理** — 网站列表、分类、联系方式、站点基础设置
-- **实时云端同步** — 后台保存 → Cloudflare KV → 全球所有访客立即更新
-- **安全认证** — SHA-256 密码哈希、5次失败锁定 30 秒、服务端限速
-- **响应式** — 完整的移动端适配，侧边栏抽屉
-- **零依赖** — 不引入任何第三方框架，原生 JS + CSS，极速加载
-- **本地缓存** — localStorage 双层缓存，断网仍可访问历史数据
+**完全免费部署**，使用 Cloudflare Pages 全球加速，国内访问速度良好。
 
-## 技术架构
+---
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   Cloudflare Pages                   │
-│                                                     │
-│  index.html / admin/         functions/api/data.js  │
-│  (静态前端 + 后台 UI)    ←→  (Pages Function API)   │
-│                                    ↓                │
-│                          KV Namespace: PORTAL_DATA  │
-│                          (key: "all" → JSON 全量数据)│
-└─────────────────────────────────────────────────────┘
+## 🖼️ 功能介绍
 
-访客流程：
-  1. 浏览器加载页面 → 渲染 localStorage 缓存（0ms 感知延迟）
-  2. 后台拉取 GET /api/data → 用 KV 数据更新 localStorage → 重渲染
+### 前台展示
+- 落樱飘落 + 闪烁星空动态背景
+- 毛玻璃卡片展示你的网站集合，鼠标悬停有霓虹光晕跟随效果
+- 支持按分类筛选、关键词搜索
+- 点击卡片弹出详情窗口，一键访问或复制链接
+- 展示你的个人资料、GitHub、邮箱、微信、QQ 等联系方式
+- 完整手机端适配
 
-管理员流程：
-  1. 登录后台 → 修改内容 → 点击保存
-  2. 自动 POST /api/data（Bearer 密码认证）→ 写入 KV
-  3. 所有访客下次打开/刷新立即看到新数据
-```
+### 后台管理（需密码登录）
+- 添加、编辑、删除展示的网站
+- 管理分类标签（前台筛选栏自动更新）
+- 修改个人资料（名字、头像、签名、网站名称等）
+- 修改联系方式
+- **实时同步**：每次保存自动推送到云端，全球访客立刻看到
 
-## 快速开始
+---
 
-### 第一步：Fork 仓库
+## 🚀 如何搭建（完整步骤）
 
-点击右上角 **Fork**，将此仓库 Fork 到你的 GitHub 账户。
+### 第一步：复制这个项目到你的 GitHub
 
-### 第二步：生成你的密码哈希
+点击页面右上角的 **Fork** 按钮，把这个项目复制一份到你自己的 GitHub 账户。
 
-在**任意浏览器控制台**运行以下代码，将 `你的密码` 替换为你想设置的密码：
+### 第二步：生成你自己的管理员密码哈希
+
+密码不会明文存储，需要先把密码转换成哈希值。方法：
+
+1. 打开任意网页（比如百度），按 F12 打开开发者工具，点击「控制台」标签
+2. 复制粘贴下面的代码，把 `你的密码` 改成你想设置的密码，然后回车：
 
 ```javascript
 crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
-  .then(buf => console.log(
-    Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-  ));
+  .then(buf => console.log(Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')))
 ```
 
-复制输出的 64 位十六进制字符串，这就是你的 `CF_ADMIN_HASH`。
+3. 控制台会输出一串 64 位字符，复制保存好，这就是你的 **密码哈希值**
 
-### 第三步：配置 GitHub Secrets
+### 第三步：注册 Cloudflare 账号
 
-在你 Fork 的仓库中，进入 **Settings → Secrets and variables → Actions**，添加以下 3 个 Secret：
+前往 [cloudflare.com](https://cloudflare.com) 注册免费账号（有邮箱即可，无需信用卡）。
 
-| Secret 名称 | 填写内容 |
+### 第四步：在 Cloudflare 创建网站项目
+
+1. 登录 Cloudflare → 左侧菜单点击 **Workers 和 Pages**
+2. 点击 **创建应用程序** → **Pages** → **连接到 Git**
+3. 选择你 Fork 的仓库，点击 **开始设置**
+4. 构建配置填写如下：
+   - **构建命令**：`node build.js`
+   - **构建输出目录**：`.`（就是一个英文句号）
+5. 点击**保存并部署**，等待第一次部署完成（约 1 分钟）
+
+### 第五步：创建数据存储空间（KV）
+
+后台数据需要存储在 Cloudflare 的 KV 数据库中。
+
+1. Cloudflare 左侧菜单 → **Workers 和 Pages** → **KV**
+2. 点击**创建命名空间**，名称填写 `PORTAL_DATA`，点击添加
+3. 复制创建好的命名空间 ID（备用）
+
+然后把这个存储空间绑定到你的网站项目：
+
+1. 回到你的 Pages 项目 → **设置** → **函数** → 找到 **KV 命名空间绑定**
+2. 点击添加绑定：
+   - **变量名称**：填写 `PORTAL_DATA`（必须完全一致）
+   - **KV 命名空间**：选择刚才创建的 `PORTAL_DATA`
+3. 保存
+
+### 第六步：配置 GitHub Secrets（自动部署必需）
+
+在你 Fork 的 GitHub 仓库中：
+
+1. 点击仓库顶部的 **Settings** → 左侧 **Secrets and variables** → **Actions**
+2. 点击 **New repository secret**，依次添加以下 3 个：
+
+| 名称 | 填写什么 |
 |---|---|
-| `CF_ADMIN_HASH` | 第二步生成的 SHA-256 哈希值 |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API Token（需要 Pages 和 Workers 权限） |
-| `CLOUDFLARE_ACCOUNT_ID` | 你的 Cloudflare Account ID |
+| `CF_ADMIN_HASH` | 第二步生成的 64 位密码哈希值 |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare API 令牌（见下方说明） |
+| `CLOUDFLARE_ACCOUNT_ID` | 你的 Cloudflare 账户 ID（见下方说明） |
 
-**获取 Cloudflare API Token：**  
-Cloudflare Dashboard → My Profile → API Tokens → Create Token → 使用 `Edit Cloudflare Workers` 模板，并额外添加 `Cloudflare Pages: Edit` 权限。
+**如何获取 Cloudflare API 令牌：**
+1. Cloudflare → 右上角头像 → **我的个人资料** → **API 令牌**
+2. 点击**创建令牌** → 使用「编辑 Cloudflare Workers」模板
+3. 在权限列表中额外添加一行：账户 → **Cloudflare Pages → 编辑**
+4. 点击创建，复制令牌
 
-**获取 Account ID：**  
-Cloudflare Dashboard 右侧边栏 → 复制 Account ID。
+**如何获取账户 ID：**
+Cloudflare 任意页面 → 右侧边栏往下找 → 复制**账户 ID**
 
-### 第四步：创建 Cloudflare Pages 项目
+### 第七步：设置云端认证密钥
 
-在 Cloudflare Dashboard → Workers & Pages → Create application → Pages → Connect to Git，选择你 Fork 的仓库。
-
-**构建配置：**
-- 构建命令：`node build.js`
-- 输出目录：`.`（保持默认即可）
-- 根目录：`/`
-
-首次部署完成后，记下你的项目名称（例如 `anime-portal`）。
-
-### 第五步：创建并绑定 KV 命名空间
-
-1. Cloudflare Dashboard → Workers & Pages → KV → Create namespace  
-   名称填 `PORTAL_DATA`，创建后复制 Namespace ID
-
-2. 进入你的 Pages 项目 → Settings → Functions → KV namespace bindings  
-   添加绑定：Variable name = `PORTAL_DATA`，KV namespace = 刚创建的命名空间
-
-   或者使用 Wrangler CLI 命令：
+1. 安装 Node.js（[nodejs.org](https://nodejs.org) 下载 LTS 版本）
+2. 打开命令行，运行：
    ```bash
    npm install -g wrangler
    wrangler login
-   wrangler kv namespace create PORTAL_DATA
-   # 复制输出的 ID，然后通过 Dashboard 手动绑定
    ```
+   浏览器会弹出 Cloudflare 授权页面，点击允许
 
-3. 设置 Pages Function 密钥：
+3. 运行以下命令设置密钥（替换为你的实际值）：
    ```bash
-   echo -n "你的密码的SHA256哈希" | wrangler pages secret put ADMIN_HASH --project-name 你的项目名
+   echo -n "你的64位密码哈希值" | wrangler pages secret put ADMIN_HASH --project-name 你的Pages项目名称
    ```
+   Pages 项目名称就是第四步创建时填写的名称
 
-### 第六步：推送触发自动部署
+### 第八步：触发重新部署
 
-提交任意修改（或直接在 GitHub 上编辑一个文件保存），GitHub Actions 会自动：
-1. 生成 `js/config.js`（包含密码哈希，用于前端登录验证）
-2. 部署到 Cloudflare Pages
-3. 同步更新 `ADMIN_HASH` 密钥到 Pages Function
+在你的 GitHub 仓库中，随便编辑一个文件（比如在 README 末尾加个空格），提交保存。
 
-部署完成后，访问 `https://你的项目名.pages.dev` 即可看到门户。
+GitHub Actions 会自动运行，大约 1-2 分钟后完成部署。
 
----
-
-## 使用后台管理
-
-访问 `https://你的域名/admin`，输入密码登录。
-
-| 功能 | 说明 |
-|---|---|
-| 网站管理 | 增删改查展示的网站卡片，支持分页和搜索 |
-| 添加网站 | 填写名称、链接、分类、状态、标签等信息 |
-| 分类管理 | 添加/删除前台筛选栏的分类标签 |
-| 联系方式 | 修改 GitHub、邮箱、微信、QQ 等信息 |
-| 基础设置 | 网站名、作者名、头像、签名、版权署名 |
-| 导出配置 | 下载当前数据的 JS 备份文件 |
-
-所有保存操作会在 1 秒内同步到 Cloudflare KV，访客刷新页面即可看到最新内容。
+**到这里就完成了！** 访问 `https://你的项目名.pages.dev` 看看效果。
 
 ---
 
-## 修改密码
+## 🔑 如何登录后台
 
-**本地修改（当前浏览器生效）：**  
-后台 → 修改密码 → 输入当前密码和新密码。
+访问 `https://你的域名/admin`，输入你在第二步设置的密码即可登录。
 
-> ⚠️ 注意：此操作仅修改当前浏览器的登录验证。下次以新密码重新登录后，后台保存操作将因云端认证不匹配而失败（显示 "云端同步失败：认证过期"）。
-
-**彻底修改（跨设备、云端同步生效）：**
-1. 生成新密码的 SHA-256 哈希（见第二步）
-2. 在 GitHub 仓库 Secrets 中更新 `CF_ADMIN_HASH`
-3. 推送任意 commit 触发重新部署
+登录后台后，所有修改操作（保存网站、编辑分类等）都会**自动同步**到云端，其他人刷新页面就能看到最新内容。
 
 ---
 
-## 自定义外观
+## ✏️ 如何修改默认内容
 
-### 修改默认展示数据
+### 修改默认展示的网站
 
-编辑 `js/data.js` — 修改 `initialWebsitesData` 数组中的网站数据，这是首次加载（KV 为空时）显示的默认内容。
+编辑项目根目录的 `js/data.js` 文件，修改 `initialWebsitesData` 数组中的内容。这些是 KV 数据库为空时展示的初始数据（首次部署前）。
 
-### 修改网站名称/作者信息
+### 修改个人信息
 
-有两种方式：
-- **后台管理**（推荐）：基础设置页面实时修改
-- **代码**：修改 `js/main.js` 顶部的 `DEFAULT_SITE_SETTINGS` 对象
+登录后台 → **基础设置**，可以修改：
+- 网站名称
+- 你的昵称
+- 身份标签（比如"全栈开发者"）
+- 个性签名
+- 头像图片链接
+- 页脚版权署名
 
-### 修改样式
+### 修改联系方式
 
-编辑 `css/style.css`。主色调变量在文件顶部 `:root {}` 中定义。
-
----
-
-## 安全说明
-
-- 管理员密码**从不**以明文存储，只在登录会话期间保存在 JS 内存中，页面关闭即清除
-- 所有后台写操作需通过 SHA-256 密码哈希认证
-- API 端点有服务端限速保护：同一 IP 每分钟最多 15 次 POST 请求
-- 登录页面有前端限速：5 次失败后锁定 30 秒
-- 所有用户数据在插入 DOM 前经过 HTML 转义（防 XSS）
-- 所有 URL 在使用前验证 http/https 协议（防 javascript: 注入）
-- `js/config.js`（含密码哈希）已加入 `.gitignore`，不会提交到公开仓库
+登录后台 → **联系方式**，修改 GitHub、邮箱、微信、QQ 等。
 
 ---
 
-## 项目结构
+## 🔒 修改管理员密码
+
+**快速方法（仅当前浏览器生效）：**
+后台 → **修改密码** 页面操作。
+
+> ⚠️ 注意：这种方式修改的密码仅影响当前浏览器的登录验证。如果退出后以新密码重新登录，后台的云端同步功能会失效（显示认证错误）。
+
+**彻底修改（推荐，所有设备生效）：**
+1. 用新密码重新生成哈希值（参考第二步）
+2. 去 GitHub 仓库 Settings → Secrets，更新 `CF_ADMIN_HASH`
+3. 提交任意修改触发重新部署
+4. 部署完成后用新密码登录即可
+
+---
+
+## 📁 项目文件说明
 
 ```
-├── index.html              # 前台门户主页
+├── index.html            # 前台主页
 ├── admin/
-│   └── index.html          # 后台管理面板
+│   └── index.html        # 后台管理页面
 ├── js/
-│   ├── main.js             # 核心逻辑（渲染、同步、管理面板）
-│   ├── data.js             # 默认网站数据（KV 为空时使用）
-│   ├── portal-export.js    # 导出备份数据占位（默认为空）
-│   ├── config.js           # 密码哈希配置（gitignored，构建时生成）
-│   └── config.example.js   # 配置文件示例
+│   ├── main.js           # 核心逻辑（页面渲染、同步、后台管理）
+│   ├── data.js           # 初始网站数据（首次部署前的默认内容）
+│   ├── portal-export.js  # 备份数据文件（默认为空）
+│   └── config.js         # 密码哈希配置（不会上传到 GitHub，构建时自动生成）
 ├── css/
-│   └── style.css           # 全站样式（含动画、毛玻璃效果）
+│   └── style.css         # 全站样式
 ├── functions/
 │   └── api/
-│       └── data.js         # Cloudflare Pages Function（API 端点）
-├── .github/
-│   └── workflows/
-│       └── deploy.yml      # GitHub Actions 自动部署工作流
-├── build.js                # 构建脚本（生成 config.js）
-└── .gitignore
+│       └── data.js       # 后端 API（Cloudflare Pages Function）
+├── build.js              # 构建脚本
+└── .github/
+    └── workflows/
+        └── deploy.yml    # 自动部署配置
 ```
 
 ---
 
-## 常见问题
+## ❓ 常见问题
 
-**Q: 推送后 Actions 失败，提示找不到 CF_ADMIN_HASH？**  
-A: 检查 GitHub Secrets 中是否正确添加了三个 Secret，名称区分大小写。
+**Q：部署后打开页面全是示例数据，不是我的内容？**  
+A：这是正常的。示例数据来自 `js/data.js`，登录后台添加内容保存后，所有人就能看到你的数据了。
 
-**Q: 后台保存提示"云端同步失败：认证过期"？**  
-A: 说明 `_adminPassword`（内存中的密码）与 CF Pages 的 `ADMIN_HASH` 环境变量不匹配。重新刷新页面并用正确密码登录即可。如果是改密码后出现此问题，需按"修改密码"章节的步骤更新 GitHub Secret 并重新部署。
+**Q：后台保存时提示"云端同步失败：认证过期"？**  
+A：密码或认证配置不匹配。检查 Cloudflare Pages 的 `ADMIN_HASH` 密钥是否正确设置，或重新登录后台再试。
 
-**Q: 首次部署后访问 /api/data 返回 null？**  
-A: 这是正常的。KV 中还没有数据，页面会显示 `js/data.js` 中的默认网站。登录后台保存一次数据后 KV 就会有数据了。
+**Q：推送代码后 GitHub Actions 报错？**  
+A：检查 GitHub Secrets 中的三个值是否都正确填写，名称区分大小写。
 
-**Q: KV 绑定了但 Pages Function 还是提示 503？**  
-A: 绑定 KV 后需要重新部署一次才能生效。可以在 Cloudflare Dashboard 手动触发重新部署，或推送一个空 commit。
+**Q：想绑定自己的域名怎么做？**  
+A：Cloudflare Pages 项目 → **自定义域** → **设置自定义域**，填写你的域名，按提示在 DNS 里加一条记录即可。
 
-**Q: 如何绑定自定义域名？**  
-A: Cloudflare Pages 项目 → Custom domains → Add custom domain，填写你的域名，按提示配置 DNS 即可。
+**Q：KV 绑定了但后台数据还是存不上去（503 错误）？**  
+A：KV 绑定后需要重新部署一次才生效。在 Cloudflare Pages 项目页面手动点击**重试部署**，或推送一次代码触发重新部署。
 
 ---
 
-## License
+## 📜 开源协议
 
-MIT License — 可自由使用、修改和分发，保留原始版权声明即可。
+MIT 协议 — 你可以自由使用、修改、分发，保留原始版权说明即可。
