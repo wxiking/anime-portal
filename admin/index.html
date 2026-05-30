@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>后台管理 | 流光星野</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb3c6' stroke-width='2.5'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>">
-  <link rel="stylesheet" href="../css/style.css?v=8">
+  <link rel="stylesheet" href="../css/style.css?v=9">
 </head>
 <body>
 
@@ -365,6 +365,27 @@
     <!-- 移动端侧边栏遮罩 -->
     <div id="admin-sidebar-backdrop" class="admin-sidebar-backdrop"></div>
 
+  </div>
+
+  <!-- 自定义确认弹窗 -->
+  <div id="custom-confirm-overlay" class="custom-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="custom-confirm-title">
+    <div class="custom-dialog-card">
+      <div class="custom-dialog-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h4 class="custom-dialog-title" id="custom-confirm-title">确认操作</h4>
+      <p class="custom-dialog-message" id="custom-confirm-message"></p>
+      <div class="custom-dialog-actions">
+        <button id="custom-confirm-cancel" class="custom-dialog-btn cancel">取消</button>
+        <button id="custom-confirm-ok" class="custom-dialog-btn danger">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局 Toast 通知 -->
+  <div id="custom-toast" class="custom-toast" role="status" aria-live="polite">
+    <span class="custom-toast-icon" id="custom-toast-icon"></span>
+    <span id="custom-toast-message"></span>
   </div>
 
   <script src="../js/data.js"></script>

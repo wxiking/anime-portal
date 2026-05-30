@@ -213,6 +213,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 自定义确认弹窗（替代原生 confirm）
+  function showConfirm(message, onConfirm, options = {}) {
+    const overlay = document.getElementById('custom-confirm-overlay');
+    if (!overlay) { if (confirm(message)) onConfirm(); return; }
+    const msgEl = document.getElementById('custom-confirm-message');
+    const titleEl = document.getElementById('custom-confirm-title');
+    const okBtn = document.getElementById('custom-confirm-ok');
+    const cancelBtn = document.getElementById('custom-confirm-cancel');
+    titleEl.textContent = options.title || '确认操作';
+    msgEl.textContent = message;
+    okBtn.textContent = options.okText || '确定';
+    overlay.classList.add('active');
+    function cleanup() {
+      overlay.classList.remove('active');
+      okBtn.removeEventListener('click', handleOk);
+      cancelBtn.removeEventListener('click', handleCancel);
+      overlay.removeEventListener('click', handleOverlay);
+    }
+    function handleOk() { cleanup(); onConfirm(); }
+    function handleCancel() { cleanup(); }
+    function handleOverlay(e) { if (e.target === overlay) cleanup(); }
+    okBtn.addEventListener('click', handleOk);
+    cancelBtn.addEventListener('click', handleCancel);
+    overlay.addEventListener('click', handleOverlay);
+  }
+
+  // 全局 Toast 通知（替代原生 alert）
+  let _toastTimer = null;
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('custom-toast');
+    if (!toast) { alert(message); return; }
+    const msgEl = document.getElementById('custom-toast-message');
+    const iconEl = document.getElementById('custom-toast-icon');
+    const icons = { success: '✓', error: '✕', info: 'ℹ' };
+    if (msgEl) msgEl.textContent = message;
+    if (iconEl) iconEl.textContent = icons[type] || '✓';
+    toast.className = `custom-toast ${type} active`;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => toast.classList.remove('active'), 3500);
+  }
+
   // 联系方式默认值
   const DEFAULT_CONTACT_INFO = {
     githubUrl: 'https://github.com',
@@ -234,20 +275,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const socialGithub = document.getElementById('social-github-btn');
     const socialEmail = document.getElementById('social-email-btn');
 
-    if (navGithub) navGithub.href = info.githubUrl || DEFAULT_CONTACT_INFO.githubUrl;
+    const safeGithub = isSafeURL(info.githubUrl) ? info.githubUrl : DEFAULT_CONTACT_INFO.githubUrl;
+    if (navGithub) navGithub.href = safeGithub;
     if (navEmail) navEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
-    if (socialGithub) socialGithub.href = info.githubUrl || DEFAULT_CONTACT_INFO.githubUrl;
+    if (socialGithub) socialGithub.href = safeGithub;
     if (socialEmail) socialEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
   }
 
   // 全局函数供 onclick 使用
   window.showWechatInfo = function() {
     const info = loadContactInfo();
-    alert(`微信联系方式：${info.wechatId} (${info.wechatNote})`);
+    showToast(`微信：${info.wechatId}（${info.wechatNote}）`, 'info');
   };
   window.showQQInfo = function() {
     const info = loadContactInfo();
-    alert(`官方QQ交流群：${info.qqGroup}`);
+    showToast(`QQ群：${info.qqGroup}`, 'info');
   };
 
   applyContactInfoToDOM(loadContactInfo());
@@ -478,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (Date.now() < loginLockedUntil) {
           const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
-          alert(`登录已暂时锁定，请 ${remaining} 秒后重试。`);
+          showToast(`登录已锁定，请 ${remaining} 秒后重试。`, 'error');
           return;
         }
 
@@ -496,7 +538,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (loginFailCount >= 5) {
             loginLockedUntil = Date.now() + 30 * 1000;
             loginFailCount = 0;
-            alert('连续错误次数过多，账号已锁定 30 秒。');
+            showToast('错误次数过多，账号已锁定 30 秒。', 'error');
           }
           passwordInput.style.borderColor = 'var(--color-maintain)';
           passwordInput.style.animation = 'shake 0.4s ease';
@@ -658,7 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       saveSiteSettings(settings);
       applySiteSettings(settings);
-      alert('基础设置已保存！');
+      showToast('基础设置已保存！');
     });
   }
 
@@ -739,9 +781,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // 绑定删除事件
       tr.querySelector('.delete-trigger').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (confirm(`确认要删除网站 [${site.name}] 吗？此操作不可逆。`)) {
+        showConfirm(`确认要删除网站「${site.name}」吗？此操作不可逆。`, () => {
           deleteWebsite(site.id);
-        }
+        }, { title: '删除确认', okText: '确认删除' });
       });
 
       adminTableBody.appendChild(tr);
@@ -939,12 +981,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const siteDetail = formSiteDetail.value.trim();
 
       if (!siteName || !siteUrl) {
-        alert("请输入网站名称与链接！");
+        showToast('请输入网站名称与链接！', 'error');
         return;
       }
 
       if (!isSafeURL(siteUrl)) {
-        alert("请输入有效的 HTTP 或 HTTPS 链接地址！");
+        showToast('请输入有效的 HTTP 或 HTTPS 链接地址！', 'error');
         return;
       }
 
@@ -1014,11 +1056,11 @@ document.addEventListener('DOMContentLoaded', () => {
       saveData();
       closeAdminEditPanel();
       renderAdminTable();
-      
+
       // 重置侧边栏高亮
       showAdminSection('websites');
 
-      alert("保存成功！");
+      showToast('保存成功！');
     });
   }
 
@@ -1028,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveData();
     renderAdminTable();
     closeAdminEditPanel();
-    alert("已删除！");
+    showToast('已删除！');
   }
 
   // ==========================================================================
@@ -1057,12 +1099,13 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
       item.querySelector('.cat-delete-btn').addEventListener('click', () => {
-        if (!confirm(`确认删除分类「${cat.name}」吗？该分类下的网站不会被删除，仍在「全部」中显示。`)) return;
-        categories.splice(idx, 1);
-        saveCategories(categories);
-        renderCategoriesList();
-        populateCategoryDropdowns();
-        renderFilterTabs();
+        showConfirm(`确认删除分类「${cat.name}」吗？该分类下的网站不会被删除，仍在「全部」中显示。`, () => {
+          categories.splice(idx, 1);
+          saveCategories(categories);
+          renderCategoriesList();
+          populateCategoryDropdowns();
+          renderFilterTabs();
+        }, { title: '删除分类', okText: '确认删除' });
       });
       listEl.appendChild(item);
     });
@@ -1113,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
       applyContactInfoToDOM(info);
-      alert('联系方式已保存，前台页面已实时更新！');
+      showToast('联系方式已保存，前台已实时更新！');
     });
   }
 
@@ -1213,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
 
-      alert("data.js 已下载！\n\n使用方法：\n1. 用下载的 data.js 替换本地项目里的 js/data.js\n2. 推送到 GitHub，Cloudflare 会自动重新部署");
+      showToast('data.js 已下载！替换本地文件后推送到 GitHub 即可部署。', 'info');
     });
   }
 

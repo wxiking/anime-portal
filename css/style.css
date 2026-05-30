@@ -1458,6 +1458,147 @@ body {
 }
 
 /* ==========================================================================
+   自定义确认弹窗 & Toast 通知 (Custom Dialog & Toast)
+   ========================================================================== */
+
+.custom-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 4, 20, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.custom-dialog-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.custom-dialog-card {
+  background: rgba(14, 12, 42, 0.95);
+  border: 1px solid rgba(255, 179, 198, 0.2);
+  border-radius: 22px;
+  padding: 2rem 2rem 1.75rem;
+  width: min(400px, 88vw);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  text-align: center;
+  transform: scale(0.94) translateY(10px);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.custom-dialog-overlay.active .custom-dialog-card {
+  transform: scale(1) translateY(0);
+}
+.custom-dialog-icon {
+  width: 54px;
+  height: 54px;
+  background: rgba(255, 100, 100, 0.1);
+  border: 1px solid rgba(255, 100, 100, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.1rem;
+  color: #ff7070;
+}
+.custom-dialog-title {
+  font-family: var(--font-heading);
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.55rem;
+}
+.custom-dialog-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 1.75rem;
+}
+.custom-dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+.custom-dialog-btn {
+  padding: 0.62rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  min-width: 88px;
+}
+.custom-dialog-btn.cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--glass-border);
+  color: var(--text-secondary);
+}
+.custom-dialog-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+.custom-dialog-btn.danger {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: rgba(255, 80, 80, 0.38);
+  color: #ff7a7a;
+}
+.custom-dialog-btn.danger:hover {
+  background: rgba(255, 80, 80, 0.22);
+  border-color: rgba(255, 80, 80, 0.6);
+}
+
+/* Toast 浮动通知 */
+.custom-toast {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: rgba(14, 12, 42, 0.94);
+  border: 1px solid var(--glass-border-hover);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  white-space: nowrap;
+  max-width: 90vw;
+}
+.custom-toast.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.custom-toast.success { border-color: rgba(90, 210, 130, 0.38); }
+.custom-toast.success .custom-toast-icon { color: var(--color-online); }
+.custom-toast.error { border-color: rgba(255, 100, 100, 0.38); }
+.custom-toast.error .custom-toast-icon { color: #ff7070; }
+.custom-toast.info { border-color: rgba(180, 200, 255, 0.38); }
+.custom-toast.info .custom-toast-icon { color: var(--color-lavender); }
+.custom-toast-icon {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
    自适应响应式媒体查询 (Responsive Media Queries)
    ========================================================================== */
 
