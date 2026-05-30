@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const footerCopy = document.getElementById('footer-copy-display');
     if (footerCopy) {
       const name = s.copyrightName || DEFAULT_SITE_SETTINGS.copyrightName;
-      footerCopy.textContent = `© 2026 ${name}. All Rights Reserved.`;
+      footerCopy.textContent = `© ${new Date().getFullYear()} ${name}. All Rights Reserved.`;
     }
 
     const footerDev = document.getElementById('footer-dev-name');
@@ -214,9 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 自定义确认弹窗（替代原生 confirm）
+  let _confirmCleanup = null;
   function showConfirm(message, onConfirm, options = {}) {
     const overlay = document.getElementById('custom-confirm-overlay');
     if (!overlay) { if (confirm(message)) onConfirm(); return; }
+    // 清理上一次未关闭的监听器，防止重复叠加
+    if (_confirmCleanup) { _confirmCleanup(); _confirmCleanup = null; }
     const msgEl = document.getElementById('custom-confirm-message');
     const titleEl = document.getElementById('custom-confirm-title');
     const okBtn = document.getElementById('custom-confirm-ok');
@@ -230,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
       okBtn.removeEventListener('click', handleOk);
       cancelBtn.removeEventListener('click', handleCancel);
       overlay.removeEventListener('click', handleOverlay);
+      _confirmCleanup = null;
     }
     function handleOk() { cleanup(); onConfirm(); }
     function handleCancel() { cleanup(); }
@@ -237,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     okBtn.addEventListener('click', handleOk);
     cancelBtn.addEventListener('click', handleCancel);
     overlay.addEventListener('click', handleOverlay);
+    _confirmCleanup = cleanup;
   }
 
   // 全局 Toast 通知（替代原生 alert）
