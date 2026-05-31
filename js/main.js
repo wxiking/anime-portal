@@ -591,38 +591,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginOverlay = document.getElementById('login-overlay');
     const loginForm = document.getElementById('login-form');
     const passwordInput = document.getElementById('admin-password');
+    const loginErrorMsg = document.getElementById('login-error-msg');
 
-    let loginFailCount = 0;
-    let loginLockedUntil = 0;
+    // 失败计数和锁定时间持久化到 sessionStorage，防止刷新绕过
+    let loginFailCount = parseInt(sessionStorage.getItem('_loginFails') || '0', 10);
+    let loginLockedUntil = parseInt(sessionStorage.getItem('_loginLock') || '0', 10);
+
+    function setLoginError(msg) {
+      if (loginErrorMsg) loginErrorMsg.textContent = msg;
+    }
+
+    function doLogin(password) {
+      _adminPassword = password;
+      _adminLoggedIn = true;
+      sessionStorage.setItem('_adminSession', password);
+      sessionStorage.setItem('_loginFails', '0');
+      sessionStorage.removeItem('_loginLock');
+      loginFailCount = 0;
+      loginLockedUntil = 0;
+      loginOverlay.classList.remove('active');
+      if (passwordInput) passwordInput.value = '';
+      setLoginError('');
+      adminWrapper.style.display = 'flex';
+      setTimeout(() => adminWrapper.classList.add('active'), 20);
+      initAdminDashboard();
+    }
+
+    // 自动恢复上次 session（刷新不掉线）
+    (async () => {
+      const saved = sessionStorage.getItem('_adminSession');
+      if (!saved) return;
+      const h = await hashPassword(saved);
+      if (h === ADMIN_PASSWORD_HASH) {
+        doLogin(saved);
+      } else {
+        sessionStorage.removeItem('_adminSession');
+      }
+    })();
 
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // 检查是否处于锁定期
         if (Date.now() < loginLockedUntil) {
           const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
-          showToast(`登录已锁定，请 ${remaining} 秒后重试。`, 'error');
+          setLoginError(`已锁定，请 ${remaining} 秒后重试。`);
           return;
         }
 
         const enteredPassword = passwordInput.value;
         const hash = await hashPassword(enteredPassword);
+
         if (hash === ADMIN_PASSWORD_HASH) {
-          _adminPassword = enteredPassword;
-          _adminLoggedIn = true;
-          loginFailCount = 0;
-          loginOverlay.classList.remove('active');
-          passwordInput.value = '';
-          adminWrapper.style.display = 'flex';
-          setTimeout(() => adminWrapper.classList.add('active'), 20);
-          initAdminDashboard();
+          doLogin(enteredPassword);
         } else {
           loginFailCount++;
+          sessionStorage.setItem('_loginFails', String(loginFailCount));
+
           if (loginFailCount >= 5) {
             loginLockedUntil = Date.now() + 30 * 1000;
+            sessionStorage.setItem('_loginLock', String(loginLockedUntil));
             loginFailCount = 0;
-            showToast('错误次数过多，账号已锁定 30 秒。', 'error');
+            sessionStorage.setItem('_loginFails', '0');
+            setLoginError('错误次数过多，已锁定 30 秒。');
+          } else {
+            const left = 5 - loginFailCount;
+            setLoginError(`密码错误，还可尝试 ${left} 次。`);
           }
+
           passwordInput.style.borderColor = 'var(--color-maintain)';
           passwordInput.style.animation = 'shake 0.4s ease';
           setTimeout(() => { passwordInput.style.animation = ''; }, 400);
@@ -658,6 +695,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarLogoutBtn = document.getElementById('sidebar-logout');
   if (sidebarLogoutBtn) {
     sidebarLogoutBtn.addEventListener('click', () => {
+      sessionStorage.removeItem('_adminSession');
+      sessionStorage.removeItem('_loginFails');
+      sessionStorage.removeItem('_loginLock');
+      _adminPassword = null;
+      _adminLoggedIn = false;
       window.location.href = '/';
     });
   }
