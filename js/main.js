@@ -65,7 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
     authorTag: '🎨 独立开发者',
     motto: '在星夜与代码的交界处，记录下属于自己的每一朵极光与落樱。',
     avatarUrl: '',
-    copyrightName: '草丛'
+    copyrightName: '草丛',
+    logoUrl: '',
+    footerTagline: ' 开发 · 免费托管于 Cloudflare Pages'
   };
   let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
@@ -127,6 +129,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const footerDev = document.getElementById('footer-dev-name');
     if (footerDev) footerDev.textContent = ' ' + (s.copyrightName || DEFAULT_SITE_SETTINGS.copyrightName);
+
+    const footerTaglineEl = document.getElementById('footer-tagline');
+    if (footerTaglineEl) {
+      footerTaglineEl.textContent = s.footerTagline !== undefined ? s.footerTagline : DEFAULT_SITE_SETTINGS.footerTagline;
+    }
+
+    // Logo 图片（替换导航栏默认 SVG 图标）
+    const logoImg = document.getElementById('logo-img');
+    const logoSvg = document.getElementById('logo-icon-svg');
+    if (s.logoUrl && isSafeURL(s.logoUrl)) {
+      if (logoImg) { logoImg.src = s.logoUrl; logoImg.style.display = ''; }
+      if (logoSvg) logoSvg.style.display = 'none';
+      // 同步更新浏览器 favicon
+      let faviconEl = document.querySelector('link[rel="icon"]');
+      if (!faviconEl) { faviconEl = document.createElement('link'); faviconEl.rel = 'icon'; document.head.appendChild(faviconEl); }
+      faviconEl.href = s.logoUrl;
+    } else {
+      if (logoImg) logoImg.style.display = 'none';
+      if (logoSvg) logoSvg.style.display = '';
+    }
 
     const avatarImg = document.getElementById('avatar-img');
     const avatarSvg = document.getElementById('avatar-svg');
@@ -851,6 +873,8 @@ document.addEventListener('DOMContentLoaded', () => {
     f('ss-motto', s.motto);
     f('ss-avatar-url', s.avatarUrl);
     f('ss-copyright', s.copyrightName);
+    f('ss-logo-url', s.logoUrl);
+    f('ss-footer-tagline', s.footerTagline !== undefined ? s.footerTagline : DEFAULT_SITE_SETTINGS.footerTagline);
   }
 
   const siteSettingsForm = document.getElementById('site-settings-form');
@@ -864,7 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
         authorTag: g('ss-author-tag') || DEFAULT_SITE_SETTINGS.authorTag,
         motto: g('ss-motto') || DEFAULT_SITE_SETTINGS.motto,
         avatarUrl: g('ss-avatar-url'),
-        copyrightName: g('ss-copyright') || DEFAULT_SITE_SETTINGS.copyrightName
+        copyrightName: g('ss-copyright') || DEFAULT_SITE_SETTINGS.copyrightName,
+        logoUrl: g('ss-logo-url'),
+        footerTagline: g('ss-footer-tagline')
       };
       saveSiteSettings(settings);
       applySiteSettings(settings);

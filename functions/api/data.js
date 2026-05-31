@@ -4,7 +4,7 @@
  * POST /api/data  → write all portal data to KV (admin only, password-verified)
  *
  * KV binding required:     PORTAL_DATA  (set in CF Pages dashboard)
- * Environment secret:      ADMIN_HASH   (auto-set by GitHub Actions)
+ * Environment secret:      ADMIN_HASH   (初始密码，后台修改密码后由 KV _adminHash 接管)
  */
 
 const SECURE_HEADERS = {
