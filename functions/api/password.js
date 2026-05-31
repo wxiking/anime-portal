@@ -1,10 +1,11 @@
 /**
  * Cloudflare Pages Function — Admin Password API
- * GET  /api/password → return current admin hash (for client login verification)
  * POST /api/password → change admin password (stored in KV, all devices instant)
  *
  * KV binding required:  PORTAL_DATA
  * KV key used:          _adminHash  (falls back to env.ADMIN_HASH if not set)
+ *
+ * Login verification is handled by /api/verify (server-side, no hash exposed).
  */
 
 const SECURE_HEADERS = {
@@ -29,12 +30,6 @@ async function sha256(text) {
 async function getStoredHash(env) {
   const kvHash = await env.PORTAL_DATA.get('_adminHash');
   return kvHash || (env.ADMIN_HASH || '');
-}
-
-export async function onRequestGet({ env }) {
-  if (!env.PORTAL_DATA) return jsonResponse({ error: 'KV not configured' }, 503);
-  const hash = await getStoredHash(env);
-  return jsonResponse({ hash });
 }
 
 export async function onRequestPost({ request, env }) {

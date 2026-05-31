@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getCategoryName(id) {
     const cat = categories.find(c => c.id === id);
-    return cat ? cat.name : id;
+    return cat ? cat.name : '未分类';
   }
 
   // 渲染前台筛选标签
@@ -794,16 +794,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 从 KV 拉取最新哈希（优先于 config.js），确保所有设备用同一套密码
   // 声明在 isAdminPage 块外，供登录系统和修改密码系统共同访问
   let serverHashEmpty = false;
-  const adminHashPromise = fetch('/api/password', { cache: 'no-cache' })
+  const adminHashPromise = fetch('/api/verify', { cache: 'no-cache' })
     .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (data && data.hash && /^[a-f0-9]{64}$/.test(data.hash)) {
-        ADMIN_PASSWORD_HASH = data.hash;
-        localStorage.setItem(PASSWORD_OVERRIDE_KEY, data.hash);
-      } else {
-        serverHashEmpty = true; // 服务端尚未设置密码（初始化模式）
-      }
-    })
+    .then(data => { if (data && data.serverHashEmpty) serverHashEmpty = true; })
     .catch(() => {});
 
   if (isAdminPage) {
@@ -874,11 +867,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const saved = sessionStorage.getItem('_adminSession');
       if (saved) {
-        const h = await hashPassword(saved);
-        if (h === ADMIN_PASSWORD_HASH) {
-          doLogin(saved);
-          return;
-        }
+        try {
+          const vr = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: saved })
+          });
+          if (vr.ok) {
+            const vd = await vr.json();
+            if (vd.ok) { doLogin(saved); return; }
+          }
+        } catch {}
         sessionStorage.removeItem('_adminSession');
       }
       // 无有效 session，显示普通登录框
@@ -929,11 +928,29 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        await adminHashPromise; // 确保 KV 哈希已加载
+        await adminHashPromise;
         const enteredPassword = passwordInput.value;
-        const hash = await hashPassword(enteredPassword);
 
-        if (hash === ADMIN_PASSWORD_HASH) {
+        let loginOk = false;
+        try {
+          const vr = await fetch('/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: enteredPassword })
+          });
+          if (vr.ok) {
+            const vd = await vr.json();
+            loginOk = vd.ok === true;
+          } else {
+            setLoginError('服务器验证失败，请稍后重试。');
+            return;
+          }
+        } catch {
+          setLoginError('网络异常，请检查连接后重试。');
+          return;
+        }
+
+        if (loginOk) {
           doLogin(enteredPassword);
         } else {
           loginFailCount++;
@@ -1667,14 +1684,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showResult('新密码至少需要 6 位，建议使用更强的密码。', 'error'); return;
       }
 
-      // 非初始化模式才验证当前密码
-      if (!serverHashEmpty) {
-        const currentHash = await hashPassword(currentVal);
-        if (currentHash !== ADMIN_PASSWORD_HASH) {
-          showResult('当前密码错误，无法修改。', 'error'); return;
-        }
-      }
-
       const newHash = await hashPassword(newVal);
       showResult('正在同步到云端…', '');
 
@@ -1683,17 +1692,15 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentVal}` // 直接用表单输入的当前密码
+            'Authorization': `Bearer ${currentVal}`
           },
           body: JSON.stringify({ newHash })
         });
         if (!resp.ok) {
           const err = await resp.json().catch(() => ({}));
-          showResult(`修改失败：${err.error || '服务器错误'}`, 'error'); return;
+          const msg = resp.status === 401 ? '当前密码错误，无法修改。' : (err.error || '服务器错误');
+          showResult(`修改失败：${msg}`, 'error'); return;
         }
-        // 本地状态同步
-        ADMIN_PASSWORD_HASH = newHash;
-        localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
         _adminPassword = newVal;
         sessionStorage.setItem('_adminSession', newVal);
         changePasswordForm.reset();
