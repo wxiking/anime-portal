@@ -180,6 +180,7 @@
                   <th>网站名称</th>
                   <th>网址链接</th>
                   <th>运行状态</th>
+                  <th style="width: 60px; text-align: center;">点击</th>
                   <th style="width: 100px;">操作</th>
                 </tr>
               </thead>
@@ -275,6 +276,15 @@
             <div class="form-group">
               <label class="form-label" for="form-site-features">主要功能（每行一条，最多5条，显示在详情弹窗）</label>
               <textarea id="form-site-features" class="form-textarea" rows="4" placeholder="一键极速加载访问&#10;支持手机端访问&#10;完全免费使用"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label admin-toggle-label">
+                <span>置顶推荐此网站</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="form-site-pinned">
+                  <span class="toggle-slider"></span>
+                </label>
+              </label>
             </div>
             <div class="edit-panel-footer">
               <button type="button" class="btn-action btn-secondary" onclick="document.getElementById('edit-close-btn').click()">❌ 取消</button>
@@ -418,6 +428,52 @@
             <div class="form-group">
               <label class="form-label">页脚副标题（"由❤名字"后面的文字）</label>
               <input type="text" id="ss-footer-tagline" class="form-input" placeholder=" 开发 · 免费托管于 Cloudflare Pages" maxlength="60">
+            </div>
+            <div class="form-group">
+              <label class="form-label">自定义背景图链接（留空使用默认动态背景）</label>
+              <input type="url" id="ss-bg-image" class="form-input" placeholder="https://example.com/bg.jpg">
+            </div>
+            <div class="form-group">
+              <label class="form-label">公告栏内容（留空则不显示）</label>
+              <textarea id="ss-announcement" class="form-textarea" rows="2" maxlength="200" placeholder="输入公告内容..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label admin-toggle-label">
+                <span>启用公告栏显示</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="ss-announcement-enabled">
+                  <span class="toggle-slider"></span>
+                </label>
+              </label>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label admin-toggle-label">
+                  <span>实时时钟</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="ss-clock-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label admin-toggle-label">
+                  <span>随机一言</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="ss-hitokoto-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label admin-toggle-label">
+                  <span>粒子特效</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="ss-particles-enabled" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </label>
+              </div>
             </div>
             <div class="admin-panel-footer">
               <button type="submit" class="btn-action btn-primary">

@@ -9,6 +9,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================================================
   
   function initAnimeBackdrop() {
+    // 粒子特效开关检查（直接读取 localStorage 避免函数调用顺序问题）
+    try {
+      const _saved = localStorage.getItem('portalSiteSettings');
+      if (_saved) {
+        const _s = JSON.parse(_saved);
+        if (_s.particlesEnabled === false) return;
+      }
+    } catch { /* 忽略解析错误，继续初始化 */ }
     const starContainer = document.querySelector('.star-container');
     const sakuraContainer = document.querySelector('.sakura-container');
 
@@ -55,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
   const CATEGORIES_KEY = 'portalCategories';
   const SITE_SETTINGS_KEY = 'portalSiteSettings';
+  const CLICK_STATS_KEY = 'portalClickStats';
   const API_URL = '/api/data';
   let _adminPassword = null;
   let _adminLoggedIn = false;
@@ -67,7 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     avatarUrl: '',
     copyrightName: '草丛',
     logoUrl: '',
-    footerTagline: ' 开发 · 免费托管于 Cloudflare Pages'
+    footerTagline: ' 开发 · 免费托管于 Cloudflare Pages',
+    announcement: '',
+    announcementEnabled: false,
+    backgroundImageUrl: '',
+    clockEnabled: true,
+    hitokotoEnabled: true,
+    particlesEnabled: true
   };
   let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
@@ -160,6 +175,97 @@ document.addEventListener('DOMContentLoaded', () => {
       if (avatarImg) avatarImg.style.display = 'none';
       if (avatarSvg) avatarSvg.style.display = '';
     }
+
+    // 自定义背景图
+    const bgContainer = document.querySelector('.bg-anime-container');
+    if (bgContainer) {
+      if (s.backgroundImageUrl && isSafeURL(s.backgroundImageUrl)) {
+        bgContainer.style.backgroundImage = `url("${s.backgroundImageUrl.replace(/"/g, '%22')}")`;
+        bgContainer.style.backgroundSize = 'cover';
+        bgContainer.style.backgroundPosition = 'center';
+      } else {
+        bgContainer.style.backgroundImage = '';
+        bgContainer.style.backgroundSize = '';
+        bgContainer.style.backgroundPosition = '';
+      }
+    }
+
+    // 公告栏
+    const announcementBar = document.getElementById('announcement-bar');
+    const announcementTextEl = document.getElementById('announcement-text');
+    if (announcementBar) {
+      const dismissed = sessionStorage.getItem('_announcementDismissed');
+      if (s.announcementEnabled !== false && s.announcement && !dismissed) {
+        if (announcementTextEl) announcementTextEl.textContent = s.announcement;
+        announcementBar.style.display = '';
+      } else {
+        announcementBar.style.display = 'none';
+      }
+    }
+
+    // 实时时钟显示
+    const clockEl = document.getElementById('portal-clock');
+    if (clockEl) {
+      clockEl.style.display = s.clockEnabled !== false ? '' : 'none';
+    }
+  }
+
+  // 点击量统计辅助函数
+  function loadClickStats() {
+    try { return JSON.parse(localStorage.getItem(CLICK_STATS_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function trackClick(siteId) {
+    const stats = loadClickStats();
+    stats[siteId] = (stats[siteId] || 0) + 1;
+    localStorage.setItem(CLICK_STATS_KEY, JSON.stringify(stats));
+  }
+
+  // 实时时钟
+  function initClock() {
+    const clockEl = document.getElementById('portal-clock');
+    if (!clockEl || clockEl.style.display === 'none') return;
+    function updateClock() {
+      const now = new Date();
+      const timeEl = document.getElementById('clock-time');
+      const dateEl = document.getElementById('clock-date');
+      if (timeEl) timeEl.textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+      if (dateEl) {
+        const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+        const weeks = ['日', '一', '二', '三', '四', '五', '六'];
+        dateEl.textContent = `${y}年${m}月${d}日 星期${weeks[now.getDay()]}`;
+      }
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
+
+  // 随机一言
+  async function loadHitokoto() {
+    const el = document.getElementById('hitokoto-display');
+    if (!el) return;
+    const s = loadSiteSettings();
+    if (s.hitokotoEnabled === false) { el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.textContent = '正在加载一言…';
+    try {
+      const r = await fetch('https://v1.hitokoto.cn/?encode=json&lang=cn');
+      if (!r.ok) throw new Error('hitokoto fetch failed');
+      const data = await r.json();
+      el.textContent = `「${data.hitokoto}」— ${data.from_who || data.from || '佚名'}`;
+    } catch {
+      el.style.display = 'none';
+    }
+  }
+
+  // 公告关闭按钮
+  const announcementCloseBtn = document.getElementById('announcement-close-btn');
+  if (announcementCloseBtn) {
+    announcementCloseBtn.addEventListener('click', () => {
+      const bar = document.getElementById('announcement-bar');
+      if (bar) bar.style.display = 'none';
+      sessionStorage.setItem('_announcementDismissed', '1');
+    });
   }
 
   let categories = loadCategories();
@@ -355,6 +461,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   applyContactInfoToDOM(loadContactInfo());
   applySiteSettings(loadSiteSettings());
+  initClock();
+  loadHitokoto();
 
   function loadData() {
     const localData = localStorage.getItem(STORAGE_KEY);
@@ -417,6 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.siteSettings && typeof data.siteSettings === 'object') {
         localStorage.setItem(SITE_SETTINGS_KEY, JSON.stringify(data.siteSettings));
         applySiteSettings(data.siteSettings);
+        initClock();
+        loadHitokoto();
       }
       if (changed) {
         renderFilterTabs();
@@ -475,14 +585,23 @@ document.addEventListener('DOMContentLoaded', () => {
       if (emptyState) emptyState.style.display = 'none';
     }
 
-    filtered.forEach((site, index) => {
+    // 置顶卡片排在最前
+    const sorted = [...filtered].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
+    sorted.forEach((site, index) => {
       const card = document.createElement('article');
       card.className = 'portal-card';
       card.style.animationDelay = `${index * 0.08}s`;
 
+      const pinBadgeHTML = site.pinned
+        ? `<span class="card-pin-badge"><svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>置顶</span>`
+        : '';
       const cardMeta = `
         <div class="card-meta-row">
-          <span class="card-category-tag">${escapeHTML(getCategoryName(site.category) || site.categoryName || '')}</span>
+          <div style="display:flex;align-items:center;gap:0.4rem;">
+            <span class="card-category-tag">${escapeHTML(getCategoryName(site.category) || site.categoryName || '')}</span>
+            ${pinBadgeHTML}
+          </div>
           <div class="card-status ${safeStatus(site.status)}">
             <span class="card-status-dot"></span>
             <span>${escapeHTML(site.statusText)}</span>
@@ -577,7 +696,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     modalBtnPrimary.href = isSafeURL(site.url) ? site.url : '#';
-    
+
+    // 点击量追踪
+    modalBtnPrimary.onclick = () => { if (site.id) trackClick(site.id); };
+
     // 一键复制地址交互
     modalBtnSecondary.onclick = (e) => {
       e.preventDefault();
@@ -930,6 +1052,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function loadSiteSettingsIntoForm() {
     const s = loadSiteSettings();
     const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
     f('ss-site-name', s.siteName);
     f('ss-author-name', s.authorName);
     f('ss-author-tag', s.authorTag);
@@ -938,6 +1061,12 @@ document.addEventListener('DOMContentLoaded', () => {
     f('ss-copyright', s.copyrightName);
     f('ss-logo-url', s.logoUrl);
     f('ss-footer-tagline', s.footerTagline !== undefined ? s.footerTagline : DEFAULT_SITE_SETTINGS.footerTagline);
+    f('ss-bg-image', s.backgroundImageUrl);
+    f('ss-announcement', s.announcement);
+    chk('ss-announcement-enabled', s.announcementEnabled);
+    chk('ss-clock-enabled', s.clockEnabled !== false);
+    chk('ss-hitokoto-enabled', s.hitokotoEnabled !== false);
+    chk('ss-particles-enabled', s.particlesEnabled !== false);
   }
 
   const siteSettingsForm = document.getElementById('site-settings-form');
@@ -945,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
     siteSettingsForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const g = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+      const chkVal = (id, def = true) => { const el = document.getElementById(id); return el ? el.checked : def; };
       const settings = {
         siteName: g('ss-site-name') || DEFAULT_SITE_SETTINGS.siteName,
         authorName: g('ss-author-name') || DEFAULT_SITE_SETTINGS.authorName,
@@ -953,8 +1083,16 @@ document.addEventListener('DOMContentLoaded', () => {
         avatarUrl: g('ss-avatar-url'),
         copyrightName: g('ss-copyright') || DEFAULT_SITE_SETTINGS.copyrightName,
         logoUrl: g('ss-logo-url'),
-        footerTagline: g('ss-footer-tagline')
+        footerTagline: g('ss-footer-tagline'),
+        backgroundImageUrl: g('ss-bg-image'),
+        announcement: g('ss-announcement'),
+        announcementEnabled: chkVal('ss-announcement-enabled', false),
+        clockEnabled: chkVal('ss-clock-enabled', true),
+        hitokotoEnabled: chkVal('ss-hitokoto-enabled', true),
+        particlesEnabled: chkVal('ss-particles-enabled', true)
       };
+      // 公告内容更改时，重置用户关闭状态
+      sessionStorage.removeItem('_announcementDismissed');
       saveSiteSettings(settings);
       applySiteSettings(settings);
       syncToWorker();
@@ -998,19 +1136,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const paginatedData = filtered.slice(startIdx, startIdx + adminItemsPerPage);
 
     if (paginatedData.length === 0) {
-      adminTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">暂无网站数据</td></tr>';
+      adminTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">暂无网站数据</td></tr>';
       updatePaginationControls(1, 1);
       return;
     }
 
+    const clickStats = loadClickStats();
+
     paginatedData.forEach(site => {
       const tr = document.createElement('tr');
       const safeHref = isSafeURL(site.url) ? escapeHTML(site.url) : '#';
+      const pinIndicator = site.pinned ? ' <span style="color:var(--color-sakura);font-size:0.7rem;font-weight:700;vertical-align:middle;" title="已置顶">📌</span>' : '';
       tr.innerHTML = `
         <td style="width: 60px; text-align: center;">
           <div class="card-icon-box" style="width: 32px; height: 32px; margin: 0 auto;">${getSVGIcon(site.icon)}</div>
         </td>
-        <td class="table-site-name">${escapeHTML(site.name)}</td>
+        <td class="table-site-name">${escapeHTML(site.name)}${pinIndicator}</td>
         <td><a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="table-url-link">${escapeHTML(site.url)}</a></td>
         <td>
           <div class="card-status ${safeStatus(site.status)}" style="background: transparent; border: none; padding: 0;">
@@ -1018,6 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>${escapeHTML(site.statusText)}</span>
           </div>
         </td>
+        <td style="width: 60px; text-align: center; color: var(--text-muted); font-size: 0.8rem;">${clickStats[site.id] || 0}</td>
         <td style="width: 100px;">
           <div class="table-action-btn-row">
             <button class="table-action-btn edit-trigger" data-id="${site.id}" title="并排编辑">
@@ -1140,6 +1282,10 @@ document.addEventListener('DOMContentLoaded', () => {
     currentEditingTags = [...(site.tags || [])];
     renderInteractiveTags(false);
 
+    // 置顶复选框
+    const pinnedEl = document.getElementById('form-site-pinned');
+    if (pinnedEl) pinnedEl.checked = !!site.pinned;
+
     // 激活并排弹性收缩联动分栏 (左表收至60%，右表单展开40%，绝不发生层级遮挡)
     adminSplitBox.classList.add('edit-active');
   }
@@ -1226,6 +1372,10 @@ document.addEventListener('DOMContentLoaded', () => {
       currentEditingTags = ["Vite", "Cloudflare"];
       renderInteractiveTags(false);
 
+      // 重置置顶复选框
+      const pinnedEl = document.getElementById('form-site-pinned');
+      if (pinnedEl) pinnedEl.checked = false;
+
       // 打开并排栏
       adminSplitBox.classList.add('edit-active');
     });
@@ -1278,6 +1428,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // 从当前分类配置里取名称
       const categoryNameMap = Object.fromEntries(categories.map(c => [c.id, c.name]));
 
+      const formSitePinned = document.getElementById('form-site-pinned');
+
       if (idVal === 'new') {
         // 创建新网站
         const newSite = {
@@ -1293,7 +1445,8 @@ document.addEventListener('DOMContentLoaded', () => {
           status: siteStatus,
           statusText: statusTextMap[siteStatus],
           bgGradient: randomGradient,
-          features: siteFeatures.length > 0 ? siteFeatures : ['一键极速加载访问']
+          features: siteFeatures.length > 0 ? siteFeatures : ['一键极速加载访问'],
+          pinned: formSitePinned ? formSitePinned.checked : false
         };
         websites.push(newSite);
       } else {
@@ -1313,7 +1466,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tags: currentEditingTags,
             status: siteStatus,
             statusText: statusTextMap[siteStatus],
-            features: siteFeatures.length > 0 ? siteFeatures : (websites[siteIdx].features || [])
+            features: siteFeatures.length > 0 ? siteFeatures : (websites[siteIdx].features || []),
+            pinned: formSitePinned ? formSitePinned.checked : (websites[siteIdx].pinned || false)
           };
         }
       }
