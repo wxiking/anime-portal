@@ -594,12 +594,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginErrorMsg = document.getElementById('login-error-msg');
 
     // 从 KV 拉取最新哈希（优先于 config.js），确保所有设备用同一套密码
+    let serverHashEmpty = false;
     const adminHashPromise = fetch('/api/password', { cache: 'no-cache' })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data && data.hash && /^[a-f0-9]{64}$/.test(data.hash)) {
           ADMIN_PASSWORD_HASH = data.hash;
           localStorage.setItem(PASSWORD_OVERRIDE_KEY, data.hash);
+        } else {
+          serverHashEmpty = true; // 服务端尚未设置密码（初始化模式）
         }
       })
       .catch(() => {});
@@ -1365,9 +1368,12 @@ document.addEventListener('DOMContentLoaded', () => {
         showResult('新密码至少需要 6 位，建议使用更强的密码。', 'error'); return;
       }
 
-      const currentHash = await hashPassword(currentVal);
-      if (currentHash !== ADMIN_PASSWORD_HASH) {
-        showResult('当前密码错误，无法修改。', 'error'); return;
+      // 非初始化模式才验证当前密码
+      if (!serverHashEmpty) {
+        const currentHash = await hashPassword(currentVal);
+        if (currentHash !== ADMIN_PASSWORD_HASH) {
+          showResult('当前密码错误，无法修改。', 'error'); return;
+        }
       }
 
       const newHash = await hashPassword(newVal);
@@ -1378,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${_adminPassword}`
+            'Authorization': `Bearer ${currentVal}` // 直接用表单输入的当前密码
           },
           body: JSON.stringify({ newHash })
         });

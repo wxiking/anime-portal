@@ -53,9 +53,13 @@ export async function onRequestPost({ request, env }) {
   const password = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!password) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const currentHash = await sha256(password);
   const storedHash = await getStoredHash(env);
-  if (!storedHash || currentHash !== storedHash) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (storedHash) {
+    // 正常模式：验证当前密码
+    const currentHash = await sha256(password);
+    if (currentHash !== storedHash) return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+  // 初始化模式：KV 和环境变量均无密码时，允许直接设置（首次部署引导）
 
   let body;
   try { body = await request.json(); }
