@@ -650,17 +650,20 @@ document.addEventListener('DOMContentLoaded', () => {
       initAdminDashboard();
     }
 
-    // 自动恢复上次 session（刷新不掉线）
+    // 自动恢复上次 session（刷新不掉线），完成前不显示登录框
     (async () => {
       await adminHashPromise; // 确保 KV 哈希已加载
       const saved = sessionStorage.getItem('_adminSession');
-      if (!saved) return;
-      const h = await hashPassword(saved);
-      if (h === ADMIN_PASSWORD_HASH) {
-        doLogin(saved);
-      } else {
+      if (saved) {
+        const h = await hashPassword(saved);
+        if (h === ADMIN_PASSWORD_HASH) {
+          doLogin(saved);
+          return;
+        }
         sessionStorage.removeItem('_adminSession');
       }
+      // 无有效 session，显示登录框
+      loginOverlay.classList.add('active');
     })();
 
     if (loginForm) {

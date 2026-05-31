@@ -1,7 +1,4 @@
 const fs = require('fs');
-const hash = process.env.CF_ADMIN_HASH || '';
-if (!hash) {
-  console.warn('[build] 警告: CF_ADMIN_HASH 未设置，管理员登录将无法使用');
-}
-fs.writeFileSync('js/config.js', `var SITE_CONFIG = { adminPasswordHash: '${hash}' };\n`);
+// 密码哈希现在存储在 KV 中，通过后台"修改密码"管理，此文件仅生成空配置
+fs.writeFileSync('js/config.js', `var SITE_CONFIG = { adminPasswordHash: '' };\n`);
 console.log('[build] config.js 已生成');

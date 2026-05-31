@@ -16,19 +16,9 @@ jobs:
 
       - name: Build config.js
         run: node build.js
-        env:
-          CF_ADMIN_HASH: ${{ secrets.CF_ADMIN_HASH }}
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy . --project-name anime-portal --branch master --commit-dirty=true --commit-message="${GITHUB_SHA:0:7}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Sync ADMIN_HASH to Pages Function secret
-        run: printf '%s' "$CF_ADMIN_HASH" | npx wrangler pages secret put ADMIN_HASH --project-name anime-portal
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CF_ADMIN_HASH: ${{ secrets.CF_ADMIN_HASH }}
-        continue-on-error: true

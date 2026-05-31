@@ -40,6 +40,15 @@ export async function onRequestGet({ env }) {
 export async function onRequestPost({ request, env }) {
   if (!env.PORTAL_DATA) return jsonResponse({ error: 'KV not configured' }, 503);
 
+  // IP 速率限制：每分钟最多 15 次
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rateKey = `_ratelimit:${ip}`;
+  try {
+    const current = parseInt(await env.PORTAL_DATA.get(rateKey) || '0', 10);
+    if (current >= 15) return jsonResponse({ error: 'Too many requests' }, 429);
+    await env.PORTAL_DATA.put(rateKey, String(current + 1), { expirationTtl: 60 });
+  } catch { /* KV 异常时放行，不因限流机制本身阻断正常请求 */ }
+
   const auth = request.headers.get('Authorization') || '';
   const password = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!password) return jsonResponse({ error: 'Unauthorized' }, 401);
