@@ -447,37 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
-    // 确保容器横排布局不受 CSS 缓存影响
-    const socialMatrix = document.querySelector('.social-matrix');
-    if (socialMatrix) {
-      socialMatrix.style.display = 'flex';
-      socialMatrix.style.flexDirection = 'row';
-      socialMatrix.style.flexWrap = 'wrap';
-      socialMatrix.style.gap = '0.5rem';
-      socialMatrix.style.alignItems = 'center';
-    }
-    const show = (el, visible) => {
-      if (!el) return;
-      if (visible) {
-        el.style.display = 'inline-flex';
-        el.style.alignItems = 'center';
-        el.style.gap = '0.4rem';
-        el.style.padding = '0.45rem 1rem';
-        el.style.borderRadius = '20px';
-        el.style.fontSize = '0.82rem';
-        el.style.fontWeight = '600';
-        el.style.whiteSpace = 'nowrap';
-        el.style.flexShrink = '0';
-        el.style.cursor = 'pointer';
-        el.style.textDecoration = 'none';
-        el.style.border = '1px solid rgba(255,255,255,0.12)';
-        el.style.background = 'rgba(255,255,255,0.04)';
-        el.style.color = 'rgba(255,255,255,0.75)';
-        el.style.transition = 'all 0.25s ease';
-      } else {
-        el.style.display = 'none';
-      }
-    };
+    const show = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
     const setLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
     // 导航栏 GitHub / 邮箱链接
