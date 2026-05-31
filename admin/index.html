@@ -323,7 +323,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             修改登录密码
           </h3>
-          <p class="admin-panel-hint">修改后密码仅保存在当前浏览器（影响登录验证）。<br>⚠️ <strong>重要：</strong>此操作不会更新云端认证。若以新密码重新登录后，后台保存操作将收到 401 错误。<br>如需彻底生效，请同步将新密码的 SHA-256 哈希更新到 <strong>GitHub Secret「CF_ADMIN_HASH」</strong> 并重新推送部署。</p>
+          <p class="admin-panel-hint">此操作仅修改当前浏览器的登录验证，<strong>不会更新云端认证密钥</strong>。<br>⚠️ 以新密码重新登录后，保存数据到云端将收到 401 错误。<br>如需彻底生效：去 GitHub 仓库 <strong>Settings → Secrets → 更新 CF_ADMIN_HASH</strong>，提交任意改动触发自动重新部署即可。</p>
           <div id="cp-override-status" class="admin-panel-override-status"></div>
           <form id="change-password-form" class="admin-panel-form">
             <div class="form-group">
