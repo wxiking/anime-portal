@@ -52,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let websites = [];
   const STORAGE_KEY = 'anime_websites_portal_data';
   const CONTACT_INFO_KEY = 'portalContactInfo';
-  const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
   const CATEGORIES_KEY = 'portalCategories';
   const SITE_SETTINGS_KEY = 'portalSiteSettings';
   const API_URL = '/api/data';
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     avatarUrl: '',
     copyrightName: '草丛'
   };
-  let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
+  let ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
   // 默认分类（与原始数据的 category ID 对应）
   const DEFAULT_CATEGORIES = [
@@ -740,22 +739,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarAddNewBtn = document.getElementById('sidebar-add-new');
   const sidebarCategoriesBtn = document.getElementById('sidebar-categories');
   const sidebarContactInfoBtn = document.getElementById('sidebar-contact-info');
-  const sidebarChangePasswordBtn = document.getElementById('sidebar-change-password');
   const sidebarSiteSettingsBtn = document.getElementById('sidebar-site-settings');
   const adminCategoriesSection = document.getElementById('admin-categories-section');
   const adminContactSection = document.getElementById('admin-contact-info-section');
-  const adminChangePasswordSection = document.getElementById('admin-change-password-section');
   const adminSiteSettingsSection = document.getElementById('admin-site-settings-section');
   const adminViewportTitle = document.querySelector('.admin-viewport-title');
   const adminHeaderActions = document.querySelector('.admin-header-actions');
 
-  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn, sidebarSiteSettingsBtn];
+  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarSiteSettingsBtn];
 
   function showAdminSection(section) {
     adminSplitBox.style.display = 'none';
     if (adminCategoriesSection) adminCategoriesSection.style.display = 'none';
     if (adminContactSection) adminContactSection.style.display = 'none';
-    if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'none';
     if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'none';
     ALL_SIDEBAR_BTNS.forEach(b => b && b.classList.remove('active'));
     if (adminHeaderActions) adminHeaderActions.style.display = 'none';
@@ -775,14 +771,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (adminViewportTitle) adminViewportTitle.textContent = '联系方式';
       if (sidebarContactInfoBtn) sidebarContactInfoBtn.classList.add('active');
       loadContactInfoIntoForm();
-    } else if (section === 'change-password') {
-      if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'flex';
-      if (adminViewportTitle) adminViewportTitle.textContent = '修改密码';
-      if (sidebarChangePasswordBtn) sidebarChangePasswordBtn.classList.add('active');
-      const cpResult = document.getElementById('cp-result');
-      if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
-      document.getElementById('change-password-form').reset();
-      refreshPasswordOverrideStatus();
     } else if (section === 'site-settings') {
       if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'flex';
       if (adminViewportTitle) adminViewportTitle.textContent = '基础设置';
@@ -804,14 +792,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMobileSidebar();
       closeAdminEditPanel();
       showAdminSection('contact-info');
-    });
-  }
-
-  if (sidebarChangePasswordBtn) {
-    sidebarChangePasswordBtn.addEventListener('click', () => {
-      closeMobileSidebar();
-      closeAdminEditPanel();
-      showAdminSection('change-password');
     });
   }
 
@@ -1323,77 +1303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // 9. 修改密码系统
-  // ==========================================================================
-
-  function refreshPasswordOverrideStatus() {
-    const statusEl = document.getElementById('cp-override-status');
-    const clearBtn = document.getElementById('cp-clear-override');
-    const hasOverride = !!localStorage.getItem(PASSWORD_OVERRIDE_KEY);
-    if (!statusEl) return;
-    if (hasOverride) {
-      statusEl.textContent = '当前使用：本地覆盖密码（优先于 CF 配置）';
-      statusEl.style.cssText = 'font-size:0.8rem;color:var(--color-lavender);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(200,182,255,0.08);border:1px solid rgba(200,182,255,0.2);border-radius:8px;';
-      if (clearBtn) clearBtn.style.display = 'flex';
-    } else {
-      statusEl.textContent = '当前使用：CF 部署配置（config.js 中的哈希）';
-      statusEl.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;';
-      if (clearBtn) clearBtn.style.display = 'none';
-    }
-  }
-
-  const clearOverrideBtn = document.getElementById('cp-clear-override');
-  if (clearOverrideBtn) {
-    clearOverrideBtn.addEventListener('click', () => {
-      localStorage.removeItem(PASSWORD_OVERRIDE_KEY);
-      ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
-      refreshPasswordOverrideStatus();
-      const cpResult = document.getElementById('cp-result');
-      cpResult.textContent = '已清除本地覆盖，现在使用 CF 部署的密码。';
-      cpResult.className = 'admin-panel-result success';
-    });
-  }
-
-  const changePasswordForm = document.getElementById('change-password-form');
-  if (changePasswordForm) {
-    changePasswordForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const cpResult = document.getElementById('cp-result');
-      const currentVal = document.getElementById('cp-current').value;
-      const newVal = document.getElementById('cp-new').value;
-      const confirmVal = document.getElementById('cp-confirm').value;
-
-      const showResult = (msg, type) => {
-        cpResult.textContent = msg;
-        cpResult.className = `admin-panel-result ${type}`;
-      };
-
-      if (!currentVal || !newVal || !confirmVal) {
-        showResult('请填写所有密码字段。', 'error'); return;
-      }
-      if (newVal !== confirmVal) {
-        showResult('两次输入的新密码不一致，请检查。', 'error'); return;
-      }
-      if (newVal.length < 6) {
-        showResult('新密码至少需要 6 位，建议使用更强的密码。', 'error'); return;
-      }
-
-      const currentHash = await hashPassword(currentVal);
-      if (currentHash !== ADMIN_PASSWORD_HASH) {
-        showResult('当前密码错误，无法修改。', 'error'); return;
-      }
-
-      const newHash = await hashPassword(newVal);
-      localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
-      ADMIN_PASSWORD_HASH = newHash;
-      changePasswordForm.reset();
-      refreshPasswordOverrideStatus();
-      showResult('密码修改成功！新密码已保存到当前浏览器。', 'success');
-    });
-  }
-
-  // ==========================================================================
-  // 10. 数据备份与恢复（KV JSON 下载 / 上传）
+  // 9. 数据备份与恢复（KV JSON 下载 / 上传）
   // ==========================================================================
 
   const sidebarBackupBtn = document.getElementById('sidebar-backup');
