@@ -242,21 +242,29 @@ document.addEventListener('DOMContentLoaded', () => {
     _clockInterval = setInterval(updateClock, 1000);
   }
 
-  // 随机一言
+  // 随机一言（带超时，失败时显示备用文字）
+  const HITOKOTO_FALLBACKS = [
+    '「代码如诗，逻辑如画。」— 佚名',
+    '「每一行代码都是一个微小的奇迹。」— 佚名',
+    '「在数字的世界里，你是自己的造物主。」— 佚名'
+  ];
   async function loadHitokoto() {
     const el = document.getElementById('hitokoto-display');
     if (!el) return;
     const s = loadSiteSettings();
     if (s.hitokotoEnabled === false) { el.style.display = 'none'; return; }
     el.style.display = '';
-    el.textContent = '正在加载一言…';
+    el.textContent = '';
     try {
-      const r = await fetch('https://v1.hitokoto.cn/?encode=json&lang=cn');
-      if (!r.ok) throw new Error('hitokoto fetch failed');
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const r = await fetch('https://v1.hitokoto.cn/?encode=json&lang=cn', { signal: controller.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error();
       const data = await r.json();
       el.textContent = `「${data.hitokoto}」— ${data.from_who || data.from || '佚名'}`;
     } catch {
-      el.style.display = 'none';
+      el.textContent = HITOKOTO_FALLBACKS[Math.floor(Math.random() * HITOKOTO_FALLBACKS.length)];
     }
   }
 
@@ -413,7 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
     email: '',
     wechatId: '',
     wechatNote: '请备注来意~',
-    qqGroup: ''
+    qqGroup: '',
+    githubLabel: 'GitHub',
+    bilibiliLabel: 'B站',
+    emailLabel: '发邮件',
+    wechatLabel: '微信',
+    qqLabel: 'QQ群'
   };
 
   function loadContactInfo() {
@@ -424,7 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
-    const show = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
+    const show = (el, visible) => { if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
+    const setLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
     // 导航栏 GitHub / 邮箱链接
     const navGithub = document.getElementById('nav-github-link');
@@ -433,22 +447,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navGithub) { navGithub.href = safeGithub || '#'; show(navGithub, !!safeGithub); }
     if (navEmail) { navEmail.href = `mailto:${info.email || ''}`; show(navEmail, !!info.email); }
 
-    // 个人资料卡社交按钮（有值显示，空则隐藏）
+    // 个人资料卡社交按钮（有值显示，空则隐藏；label 可自定义）
     const socialGithub = document.getElementById('social-github-btn');
-    if (socialGithub) { socialGithub.href = safeGithub || '#'; show(socialGithub, !!safeGithub); }
+    if (socialGithub) {
+      socialGithub.href = safeGithub || '#';
+      show(socialGithub, !!safeGithub);
+      setLabel('social-github-label', info.githubLabel || DEFAULT_CONTACT_INFO.githubLabel);
+    }
 
     const socialBilibili = document.getElementById('social-bilibili-btn');
     const safeBilibili = isSafeURL(info.bilibiliUrl) ? info.bilibiliUrl : '';
-    if (socialBilibili) { socialBilibili.href = safeBilibili || '#'; show(socialBilibili, !!safeBilibili); }
+    if (socialBilibili) {
+      socialBilibili.href = safeBilibili || '#';
+      show(socialBilibili, !!safeBilibili);
+      setLabel('social-bilibili-label', info.bilibiliLabel || DEFAULT_CONTACT_INFO.bilibiliLabel);
+    }
 
     const socialEmail = document.getElementById('social-email-btn');
-    if (socialEmail) { socialEmail.href = `mailto:${info.email || ''}`; show(socialEmail, !!info.email); }
+    if (socialEmail) {
+      socialEmail.href = `mailto:${info.email || ''}`;
+      show(socialEmail, !!info.email);
+      setLabel('social-email-label', info.emailLabel || DEFAULT_CONTACT_INFO.emailLabel);
+    }
 
     const socialWechat = document.getElementById('social-wechat-btn');
     show(socialWechat, !!(info.wechatId));
+    setLabel('social-wechat-label', info.wechatLabel || DEFAULT_CONTACT_INFO.wechatLabel);
 
     const socialQQ = document.getElementById('social-qq-btn');
     show(socialQQ, !!(info.qqGroup));
+    setLabel('social-qq-label', info.qqLabel || DEFAULT_CONTACT_INFO.qqLabel);
   }
 
   // 全局函数供 onclick 使用
@@ -1564,11 +1592,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const info = loadContactInfo();
     const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     f('ci-github', info.githubUrl);
+    f('ci-github-label', info.githubLabel);
     f('ci-bilibili', info.bilibiliUrl);
+    f('ci-bilibili-label', info.bilibiliLabel);
     f('ci-email', info.email);
+    f('ci-email-label', info.emailLabel);
     f('ci-wechat', info.wechatId);
+    f('ci-wechat-label', info.wechatLabel);
     f('ci-wechat-note', info.wechatNote);
     f('ci-qq', info.qqGroup);
+    f('ci-qq-label', info.qqLabel);
   }
 
   const contactInfoForm = document.getElementById('contact-info-form');
@@ -1578,11 +1611,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
       const info = {
         githubUrl: g('ci-github'),
+        githubLabel: g('ci-github-label') || DEFAULT_CONTACT_INFO.githubLabel,
         bilibiliUrl: g('ci-bilibili'),
+        bilibiliLabel: g('ci-bilibili-label') || DEFAULT_CONTACT_INFO.bilibiliLabel,
         email: g('ci-email'),
+        emailLabel: g('ci-email-label') || DEFAULT_CONTACT_INFO.emailLabel,
         wechatId: g('ci-wechat'),
+        wechatLabel: g('ci-wechat-label') || DEFAULT_CONTACT_INFO.wechatLabel,
         wechatNote: g('ci-wechat-note') || DEFAULT_CONTACT_INFO.wechatNote,
-        qqGroup: g('ci-qq')
+        qqGroup: g('ci-qq'),
+        qqLabel: g('ci-qq-label') || DEFAULT_CONTACT_INFO.qqLabel
       };
       localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
       applyContactInfoToDOM(info);
