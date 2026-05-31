@@ -36,25 +36,11 @@
 
 点击页面右上角的 **Fork** 按钮，把这个项目复制一份到你自己的 GitHub 账户。
 
-### 第二步：生成你自己的管理员密码哈希
-
-密码不会明文存储，需要先把密码转换成哈希值。方法：
-
-1. 打开任意网页（比如百度），按 F12 打开开发者工具，点击「控制台」标签
-2. 复制粘贴下面的代码，把 `你的密码` 改成你想设置的密码，然后回车：
-
-```javascript
-crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
-  .then(buf => console.log(Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')))
-```
-
-3. 控制台会输出一串 64 位字符，复制保存好，这就是你的 **密码哈希值**
-
-### 第三步：注册 Cloudflare 账号
+### 第二步：注册 Cloudflare 账号
 
 前往 [cloudflare.com](https://cloudflare.com) 注册免费账号（有邮箱即可，无需信用卡）。
 
-### 第四步：在 Cloudflare 创建网站项目
+### 第三步：在 Cloudflare 创建网站项目
 
 1. 登录 Cloudflare → 左侧菜单点击 **Workers 和 Pages**
 2. 点击 **创建应用程序** → **Pages** → **连接到 Git**
@@ -64,13 +50,12 @@ crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
    - **构建输出目录**：`.`（就是一个英文句号）
 5. 点击**保存并部署**，等待第一次部署完成（约 1 分钟）
 
-### 第五步：创建数据存储空间（KV）
+### 第四步：创建数据存储空间（KV）
 
 后台数据需要存储在 Cloudflare 的 KV 数据库中。
 
 1. Cloudflare 左侧菜单 → **Workers 和 Pages** → **KV**
 2. 点击**创建命名空间**，名称填写 `PORTAL_DATA`，点击添加
-3. 复制创建好的命名空间 ID（备用）
 
 然后把这个存储空间绑定到你的网站项目：
 
@@ -80,7 +65,7 @@ crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
    - **KV 命名空间**：选择刚才创建的 `PORTAL_DATA`
 3. 保存
 
-### 第六步：配置 GitHub Secrets（自动部署必需）
+### 第五步：配置 GitHub Secrets
 
 在你 Fork 的 GitHub 仓库中：
 
@@ -89,7 +74,7 @@ crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
 
 | 名称 | 填写什么 |
 |---|---|
-| `CF_ADMIN_HASH` | 第二步生成的 64 位密码哈希值 |
+| `CF_ADMIN_PASSWORD` | 你想设置的管理员登录密码（直接填明文，系统自动加密） |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API 令牌（见下方说明） |
 | `CLOUDFLARE_ACCOUNT_ID` | 你的 Cloudflare 账户 ID（见下方说明） |
 
@@ -102,27 +87,11 @@ crypto.subtle.digest('SHA-256', new TextEncoder().encode('你的密码'))
 **如何获取账户 ID：**
 Cloudflare 任意页面 → 右侧边栏往下找 → 复制**账户 ID**
 
-### 第七步：设置云端认证密钥
-
-1. 安装 Node.js（[nodejs.org](https://nodejs.org) 下载 LTS 版本）
-2. 打开命令行，运行：
-   ```bash
-   npm install -g wrangler
-   wrangler login
-   ```
-   浏览器会弹出 Cloudflare 授权页面，点击允许
-
-3. 运行以下命令设置密钥（替换为你的实际值）：
-   ```bash
-   echo -n "你的64位密码哈希值" | wrangler pages secret put ADMIN_HASH --project-name 你的Pages项目名称
-   ```
-   Pages 项目名称就是第四步创建时填写的名称
-
-### 第八步：触发重新部署
+### 第六步：触发部署
 
 在你的 GitHub 仓库中，随便编辑一个文件（比如在 README 末尾加个空格），提交保存。
 
-GitHub Actions 会自动运行，大约 1-2 分钟后完成部署。
+GitHub Actions 会自动运行，完成部署并把密码加密同步到云端，大约 1-2 分钟后完成。
 
 **到这里就完成了！** 访问 `https://你的项目名.pages.dev` 看看效果。
 
@@ -160,16 +129,16 @@ GitHub Actions 会自动运行，大约 1-2 分钟后完成部署。
 
 ## 🔒 修改管理员密码
 
+**彻底修改（推荐，所有设备生效）：**
+1. 去 GitHub 仓库 **Settings → Secrets and variables → Actions**
+2. 找到 `CF_ADMIN_PASSWORD`，点击更新，填入新密码
+3. 提交任意修改触发重新部署（或在 Actions 页面手动触发）
+4. 部署完成后用新密码登录即可
+
 **快速方法（仅当前浏览器生效）：**
 后台 → **修改密码** 页面操作。
 
-> ⚠️ 注意：这种方式修改的密码仅影响当前浏览器的登录验证。如果退出后以新密码重新登录，后台的云端同步功能会失效（显示认证错误）。
-
-**彻底修改（推荐，所有设备生效）：**
-1. 用新密码重新生成哈希值（参考第二步）
-2. 去 GitHub 仓库 Settings → Secrets，更新 `CF_ADMIN_HASH`
-3. 提交任意修改触发重新部署
-4. 部署完成后用新密码登录即可
+> ⚠️ 注意：这种方式修改的密码仅影响当前浏览器的登录验证。如果退出后以新密码重新登录，后台的云端同步功能会失效（显示认证错误）。建议使用上方的彻底修改方式。
 
 ---
 
@@ -202,10 +171,10 @@ GitHub Actions 会自动运行，大约 1-2 分钟后完成部署。
 A：这是正常的。示例数据来自 `js/data.js`，登录后台添加内容保存后，所有人就能看到你的数据了。
 
 **Q：后台保存时提示"云端同步失败：认证过期"？**  
-A：密码或认证配置不匹配。检查 Cloudflare Pages 的 `ADMIN_HASH` 密钥是否正确设置，或重新登录后台再试。
+A：密码或认证配置不匹配。确认 GitHub Actions 已成功运行（仓库 → Actions 查看），或重新登录后台再试。
 
 **Q：推送代码后 GitHub Actions 报错？**  
-A：检查 GitHub Secrets 中的三个值是否都正确填写，名称区分大小写。
+A：检查 GitHub Secrets 中的三个值（`CF_ADMIN_PASSWORD`、`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`）是否都正确填写，名称区分大小写。
 
 **Q：想绑定自己的域名怎么做？**  
 A：Cloudflare Pages 项目 → **自定义域** → **设置自定义域**，填写你的域名，按提示在 DNS 里加一条记录即可。
