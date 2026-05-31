@@ -3,8 +3,8 @@
  * GET  /api/data  → read all portal data from KV (public)
  * POST /api/data  → write all portal data to KV (admin only, password-verified)
  *
- * KV binding required:     PORTAL_DATA    (set in CF Pages dashboard)
- * Environment secret:      ADMIN_PASSWORD (auto-synced by GitHub Actions)
+ * KV binding required:     PORTAL_DATA  (set in CF Pages dashboard)
+ * Environment secret:      ADMIN_HASH   (auto-set by GitHub Actions)
  */
 
 const SECURE_HEADERS = {
@@ -48,10 +48,8 @@ export async function onRequestPost({ request, env }) {
   const password = auth.startsWith('Bearer ') ? auth.slice(7) : '';
   if (!password) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  if (!env.ADMIN_PASSWORD) return jsonResponse({ error: 'Server misconfigured' }, 500);
   const hash = await sha256(password);
-  const adminHash = await sha256(env.ADMIN_PASSWORD);
-  if (hash !== adminHash) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (hash !== (env.ADMIN_HASH || '')) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body;
   try { body = await request.json(); }
