@@ -587,25 +587,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const isAdminPage = !!document.querySelector('.admin-wrapper');
   const adminWrapper = document.querySelector('.admin-wrapper');
 
+  // 从 KV 拉取最新哈希（优先于 config.js），确保所有设备用同一套密码
+  // 声明在 isAdminPage 块外，供登录系统和修改密码系统共同访问
+  let serverHashEmpty = false;
+  const adminHashPromise = fetch('/api/password', { cache: 'no-cache' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if (data && data.hash && /^[a-f0-9]{64}$/.test(data.hash)) {
+        ADMIN_PASSWORD_HASH = data.hash;
+        localStorage.setItem(PASSWORD_OVERRIDE_KEY, data.hash);
+      } else {
+        serverHashEmpty = true; // 服务端尚未设置密码（初始化模式）
+      }
+    })
+    .catch(() => {});
+
   if (isAdminPage) {
     const loginOverlay = document.getElementById('login-overlay');
     const loginForm = document.getElementById('login-form');
     const passwordInput = document.getElementById('admin-password');
     const loginErrorMsg = document.getElementById('login-error-msg');
-
-    // 从 KV 拉取最新哈希（优先于 config.js），确保所有设备用同一套密码
-    let serverHashEmpty = false;
-    const adminHashPromise = fetch('/api/password', { cache: 'no-cache' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.hash && /^[a-f0-9]{64}$/.test(data.hash)) {
-          ADMIN_PASSWORD_HASH = data.hash;
-          localStorage.setItem(PASSWORD_OVERRIDE_KEY, data.hash);
-        } else {
-          serverHashEmpty = true; // 服务端尚未设置密码（初始化模式）
-        }
-      })
-      .catch(() => {});
 
     // 失败计数和锁定时间持久化到 sessionStorage，防止刷新绕过
     let loginFailCount = parseInt(sessionStorage.getItem('_loginFails') || '0', 10);
