@@ -695,6 +695,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 自动恢复上次 session（刷新不掉线），完成前不显示登录框
     (async () => {
       await adminHashPromise; // 确保 KV 哈希已加载
+
+      // 首次部署：服务端无密码，切换到初始化设置界面
+      if (serverHashEmpty) {
+        const normalView = document.getElementById('login-normal-view');
+        const setupView = document.getElementById('login-setup-view');
+        if (normalView) normalView.style.display = 'none';
+        if (setupView) setupView.style.display = '';
+        loginOverlay.classList.add('active');
+        return;
+      }
+
       const saved = sessionStorage.getItem('_adminSession');
       if (saved) {
         const h = await hashPassword(saved);
@@ -704,9 +715,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         sessionStorage.removeItem('_adminSession');
       }
-      // 无有效 session，显示登录框
+      // 无有效 session，显示普通登录框
       loginOverlay.classList.add('active');
     })();
+
+    // 首次设置密码表单
+    const setupPasswordForm = document.getElementById('setup-password-form');
+    const setupErrorMsg = document.getElementById('setup-error-msg');
+    if (setupPasswordForm) {
+      setupPasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newVal = document.getElementById('setup-new-password').value;
+        const confirmVal = document.getElementById('setup-confirm-password').value;
+        const showErr = msg => { if (setupErrorMsg) setupErrorMsg.textContent = msg; };
+
+        if (!newVal || !confirmVal) { showErr('请填写所有字段。'); return; }
+        if (newVal !== confirmVal) { showErr('两次输入不一致，请检查。'); return; }
+        if (newVal.length < 6) { showErr('密码至少需要 6 位。'); return; }
+
+        showErr('正在保存…');
+        try {
+          const newHash = await hashPassword(newVal);
+          const resp = await fetch('/api/password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer __bootstrap__' },
+            body: JSON.stringify({ newHash })
+          });
+          if (!resp.ok) { showErr('保存失败，请稍后重试。'); return; }
+          // 保存成功，更新本地哈希并自动登录
+          ADMIN_PASSWORD_HASH = newHash;
+          serverHashEmpty = false;
+          localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
+          doLogin(newVal);
+        } catch { showErr('网络异常，请稍后重试。'); }
+      });
+    }
 
     if (loginForm) {
       loginForm.addEventListener('submit', async (e) => {
