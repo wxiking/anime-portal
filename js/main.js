@@ -447,6 +447,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
+    // 确保容器横排布局不受 CSS 缓存影响
+    const socialMatrix = document.querySelector('.social-matrix');
+    if (socialMatrix) {
+      socialMatrix.style.display = 'flex';
+      socialMatrix.style.flexDirection = 'row';
+      socialMatrix.style.flexWrap = 'wrap';
+      socialMatrix.style.gap = '0.5rem';
+      socialMatrix.style.alignItems = 'center';
+    }
     const show = (el, visible) => {
       if (!el) return;
       if (visible) {
