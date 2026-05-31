@@ -296,11 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 联系方式默认值
   const DEFAULT_CONTACT_INFO = {
-    githubUrl: 'https://github.com',
-    email: 'admin@example.com',
-    wechatId: 'Hoshino_Sakura',
-    wechatNote: '请备注合作说明哦~',
-    qqGroup: '987654321'
+    githubUrl: '',
+    bilibiliUrl: '',
+    email: '',
+    wechatId: '',
+    wechatNote: '请备注来意~',
+    qqGroup: ''
   };
 
   function loadContactInfo() {
@@ -311,16 +312,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
+    const show = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
+
+    // 导航栏 GitHub / 邮箱链接
     const navGithub = document.getElementById('nav-github-link');
     const navEmail = document.getElementById('nav-email-link');
-    const socialGithub = document.getElementById('social-github-btn');
-    const socialEmail = document.getElementById('social-email-btn');
+    const safeGithub = isSafeURL(info.githubUrl) ? info.githubUrl : '';
+    if (navGithub) { navGithub.href = safeGithub || '#'; show(navGithub, !!safeGithub); }
+    if (navEmail) { navEmail.href = `mailto:${info.email || ''}`; show(navEmail, !!info.email); }
 
-    const safeGithub = isSafeURL(info.githubUrl) ? info.githubUrl : DEFAULT_CONTACT_INFO.githubUrl;
-    if (navGithub) navGithub.href = safeGithub;
-    if (navEmail) navEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
-    if (socialGithub) socialGithub.href = safeGithub;
-    if (socialEmail) socialEmail.href = `mailto:${info.email || DEFAULT_CONTACT_INFO.email}`;
+    // 个人资料卡社交按钮（有值显示，空则隐藏）
+    const socialGithub = document.getElementById('social-github-btn');
+    if (socialGithub) { socialGithub.href = safeGithub || '#'; show(socialGithub, !!safeGithub); }
+
+    const socialBilibili = document.getElementById('social-bilibili-btn');
+    const safeBilibili = isSafeURL(info.bilibiliUrl) ? info.bilibiliUrl : '';
+    if (socialBilibili) { socialBilibili.href = safeBilibili || '#'; show(socialBilibili, !!safeBilibili); }
+
+    const socialEmail = document.getElementById('social-email-btn');
+    if (socialEmail) { socialEmail.href = `mailto:${info.email || ''}`; show(socialEmail, !!info.email); }
+
+    const socialWechat = document.getElementById('social-wechat-btn');
+    show(socialWechat, !!(info.wechatId));
+
+    const socialQQ = document.getElementById('social-qq-btn');
+    show(socialQQ, !!(info.qqGroup));
   }
 
   // 全局函数供 onclick 使用
@@ -1343,6 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const info = loadContactInfo();
     const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     f('ci-github', info.githubUrl);
+    f('ci-bilibili', info.bilibiliUrl);
     f('ci-email', info.email);
     f('ci-wechat', info.wechatId);
     f('ci-wechat-note', info.wechatNote);
@@ -1353,12 +1370,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (contactInfoForm) {
     contactInfoForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
       const info = {
-        githubUrl: document.getElementById('ci-github').value.trim() || DEFAULT_CONTACT_INFO.githubUrl,
-        email: document.getElementById('ci-email').value.trim() || DEFAULT_CONTACT_INFO.email,
-        wechatId: document.getElementById('ci-wechat').value.trim() || DEFAULT_CONTACT_INFO.wechatId,
-        wechatNote: document.getElementById('ci-wechat-note').value.trim() || DEFAULT_CONTACT_INFO.wechatNote,
-        qqGroup: document.getElementById('ci-qq').value.trim() || DEFAULT_CONTACT_INFO.qqGroup
+        githubUrl: g('ci-github'),
+        bilibiliUrl: g('ci-bilibili'),
+        email: g('ci-email'),
+        wechatId: g('ci-wechat'),
+        wechatNote: g('ci-wechat-note') || DEFAULT_CONTACT_INFO.wechatNote,
+        qqGroup: g('ci-qq')
       };
       localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
       applyContactInfoToDOM(info);

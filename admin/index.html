@@ -284,26 +284,30 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             联系方式管理
           </h3>
-          <p class="admin-panel-hint">修改后前台页面的联系方式实时更新，数据存储在浏览器本地。</p>
+          <p class="admin-panel-hint">修改后保存，前台联系方式实时同步到云端。留空的项目会自动隐藏，不会在前台显示。</p>
           <form id="contact-info-form" class="admin-panel-form">
             <div class="form-group">
-              <label class="form-label">GitHub 主页链接</label>
+              <label class="form-label">GitHub 主页链接（留空则隐藏）</label>
               <input type="url" id="ci-github" class="form-input" placeholder="https://github.com/username">
             </div>
             <div class="form-group">
-              <label class="form-label">邮箱地址</label>
+              <label class="form-label">B站主页链接（留空则隐藏）</label>
+              <input type="url" id="ci-bilibili" class="form-input" placeholder="https://space.bilibili.com/xxxxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">邮箱地址（留空则隐藏）</label>
               <input type="email" id="ci-email" class="form-input" placeholder="your@email.com">
             </div>
             <div class="form-group">
-              <label class="form-label">微信号</label>
+              <label class="form-label">微信号（留空则隐藏）</label>
               <input type="text" id="ci-wechat" class="form-input" placeholder="WeChat ID">
             </div>
             <div class="form-group">
               <label class="form-label">微信备注提示语</label>
-              <input type="text" id="ci-wechat-note" class="form-input" placeholder="请备注...">
+              <input type="text" id="ci-wechat-note" class="form-input" placeholder="请备注来意~">
             </div>
             <div class="form-group">
-              <label class="form-label">QQ 交流群号</label>
+              <label class="form-label">QQ 交流群号（留空则隐藏）</label>
               <input type="text" id="ci-qq" class="form-input" placeholder="987654321">
             </div>
             <div class="admin-panel-footer">
