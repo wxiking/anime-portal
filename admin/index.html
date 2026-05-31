@@ -323,8 +323,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             修改登录密码
           </h3>
-          <p class="admin-panel-hint">此操作仅修改当前浏览器的登录验证，<strong>不会更新云端认证密钥</strong>。<br>⚠️ 以新密码重新登录后，保存数据到云端将收到 401 错误。<br>如需彻底生效：去 GitHub 仓库 <strong>Settings → Secrets → 更新 CF_ADMIN_HASH</strong>，提交任意改动触发自动重新部署即可。</p>
-          <div id="cp-override-status" class="admin-panel-override-status"></div>
+          <p class="admin-panel-hint">修改后新密码立即同步到云端，所有设备登录均使用新密码，无需重新部署。</p>
           <form id="change-password-form" class="admin-panel-form">
             <div class="form-group">
               <label class="form-label">当前密码</label>
@@ -339,8 +338,7 @@
               <input type="password" id="cp-confirm" class="form-input" placeholder="再次输入新密码...">
             </div>
             <div id="cp-result" class="admin-panel-result"></div>
-            <div class="admin-panel-footer" style="gap: 0.75rem;">
-              <button type="button" id="cp-clear-override" class="btn-action btn-secondary" style="display:none;">清除本地覆盖，还原 CF 密码</button>
+            <div class="admin-panel-footer">
               <button type="submit" class="btn-action btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 确认修改密码

@@ -49,7 +49,8 @@ export async function onRequestPost({ request, env }) {
   if (!password) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const hash = await sha256(password);
-  if (hash !== (env.ADMIN_HASH || '')) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const storedHash = (await env.PORTAL_DATA.get('_adminHash')) || (env.ADMIN_HASH || '');
+  if (hash !== storedHash) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let body;
   try { body = await request.json(); }

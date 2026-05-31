@@ -593,6 +593,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('admin-password');
     const loginErrorMsg = document.getElementById('login-error-msg');
 
+    // 从 KV 拉取最新哈希（优先于 config.js），确保所有设备用同一套密码
+    const adminHashPromise = fetch('/api/password', { cache: 'no-cache' })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.hash && /^[a-f0-9]{64}$/.test(data.hash)) {
+          ADMIN_PASSWORD_HASH = data.hash;
+          localStorage.setItem(PASSWORD_OVERRIDE_KEY, data.hash);
+        }
+      })
+      .catch(() => {});
+
     // 失败计数和锁定时间持久化到 sessionStorage，防止刷新绕过
     let loginFailCount = parseInt(sessionStorage.getItem('_loginFails') || '0', 10);
     let loginLockedUntil = parseInt(sessionStorage.getItem('_loginLock') || '0', 10);
@@ -641,6 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 自动恢复上次 session（刷新不掉线）
     (async () => {
+      await adminHashPromise; // 确保 KV 哈希已加载
       const saved = sessionStorage.getItem('_adminSession');
       if (!saved) return;
       const h = await hashPassword(saved);
@@ -663,6 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        await adminHashPromise; // 确保 KV 哈希已加载
         const enteredPassword = passwordInput.value;
         const hash = await hashPassword(enteredPassword);
 
@@ -782,7 +795,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const cpResult = document.getElementById('cp-result');
       if (cpResult) { cpResult.className = 'admin-panel-result'; cpResult.textContent = ''; }
       document.getElementById('change-password-form').reset();
-      refreshPasswordOverrideStatus();
     } else if (section === 'site-settings') {
       if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'flex';
       if (adminViewportTitle) adminViewportTitle.textContent = '基础设置';
@@ -1326,34 +1338,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 9. 修改密码系统
   // ==========================================================================
 
-  function refreshPasswordOverrideStatus() {
-    const statusEl = document.getElementById('cp-override-status');
-    const clearBtn = document.getElementById('cp-clear-override');
-    const hasOverride = !!localStorage.getItem(PASSWORD_OVERRIDE_KEY);
-    if (!statusEl) return;
-    if (hasOverride) {
-      statusEl.textContent = '当前使用：本地覆盖密码（优先于 CF 配置）';
-      statusEl.style.cssText = 'font-size:0.8rem;color:var(--color-lavender);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(200,182,255,0.08);border:1px solid rgba(200,182,255,0.2);border-radius:8px;';
-      if (clearBtn) clearBtn.style.display = 'flex';
-    } else {
-      statusEl.textContent = '当前使用：CF 部署配置（config.js 中的哈希）';
-      statusEl.style.cssText = 'font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;';
-      if (clearBtn) clearBtn.style.display = 'none';
-    }
-  }
-
-  const clearOverrideBtn = document.getElementById('cp-clear-override');
-  if (clearOverrideBtn) {
-    clearOverrideBtn.addEventListener('click', () => {
-      localStorage.removeItem(PASSWORD_OVERRIDE_KEY);
-      ADMIN_PASSWORD_HASH = (window.SITE_CONFIG || {}).adminPasswordHash || '';
-      refreshPasswordOverrideStatus();
-      const cpResult = document.getElementById('cp-result');
-      cpResult.textContent = '已清除本地覆盖，现在使用 CF 部署的密码。';
-      cpResult.className = 'admin-panel-result success';
-    });
-  }
-
   const changePasswordForm = document.getElementById('change-password-form');
   if (changePasswordForm) {
     changePasswordForm.addEventListener('submit', async (e) => {
@@ -1365,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const showResult = (msg, type) => {
         cpResult.textContent = msg;
-        cpResult.className = `admin-panel-result ${type}`;
+        cpResult.className = `admin-panel-result ${type || ''}`;
       };
 
       if (!currentVal || !newVal || !confirmVal) {
@@ -1384,11 +1368,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const newHash = await hashPassword(newVal);
-      localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
-      ADMIN_PASSWORD_HASH = newHash;
-      changePasswordForm.reset();
-      refreshPasswordOverrideStatus();
-      showResult('密码修改成功！新密码已保存到当前浏览器。', 'success');
+      showResult('正在同步到云端…', '');
+
+      try {
+        const resp = await fetch('/api/password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${_adminPassword}`
+          },
+          body: JSON.stringify({ newHash })
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          showResult(`修改失败：${err.error || '服务器错误'}`, 'error'); return;
+        }
+        // 本地状态同步
+        ADMIN_PASSWORD_HASH = newHash;
+        localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
+        _adminPassword = newVal;
+        sessionStorage.setItem('_adminSession', newVal);
+        changePasswordForm.reset();
+        showResult('密码修改成功！已同步到云端，所有设备立即生效。', 'success');
+      } catch {
+        showResult('网络异常，请稍后重试。', 'error');
+      }
     });
   }
 
