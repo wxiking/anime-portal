@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>后台管理 | 流光星野</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffb3c6' stroke-width='2.5'><polygon points='12 2 2 7 12 12 22 7 12 2'/><polyline points='2 17 12 22 22 17'/><polyline points='2 12 12 17 22 12'/></svg>">
-  <link rel="stylesheet" href="../css/style.css?v=10">
+  <link rel="stylesheet" href="../css/style.css?v=11">
 </head>
 <body>
 
@@ -475,34 +475,28 @@
                 </label>
               </label>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-              <div class="form-group">
-                <label class="form-label admin-toggle-label">
-                  <span>实时时钟</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="ss-clock-enabled" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
+            <div style="display:flex; flex-wrap:wrap; gap:0.75rem 2.5rem; align-items:center; padding:0.25rem 0;">
+              <label class="form-label admin-toggle-label">
+                <span>实时时钟</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="ss-clock-enabled" checked>
+                  <span class="toggle-slider"></span>
                 </label>
-              </div>
-              <div class="form-group">
-                <label class="form-label admin-toggle-label">
-                  <span>随机一言</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="ss-hitokoto-enabled" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
+              </label>
+              <label class="form-label admin-toggle-label">
+                <span>随机一言</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="ss-hitokoto-enabled" checked>
+                  <span class="toggle-slider"></span>
                 </label>
-              </div>
-              <div class="form-group">
-                <label class="form-label admin-toggle-label">
-                  <span>粒子特效</span>
-                  <label class="toggle-switch">
-                    <input type="checkbox" id="ss-particles-enabled" checked>
-                    <span class="toggle-slider"></span>
-                  </label>
+              </label>
+              <label class="form-label admin-toggle-label">
+                <span>粒子特效</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="ss-particles-enabled" checked>
+                  <span class="toggle-slider"></span>
                 </label>
-              </div>
+              </label>
             </div>
             <div class="admin-panel-footer">
               <button type="submit" class="btn-action btn-primary">
