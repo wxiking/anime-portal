@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const API_URL = '/api/data';
   let _adminPassword = null;
   let _adminLoggedIn = false;
+  let _clockInterval = null;
 
   const DEFAULT_SITE_SETTINGS = {
     siteName: '流光星野',
@@ -221,8 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(CLICK_STATS_KEY, JSON.stringify(stats));
   }
 
-  // 实时时钟
+  // 实时时钟（清除旧 interval 防止多次调用堆叠）
   function initClock() {
+    if (_clockInterval) { clearInterval(_clockInterval); _clockInterval = null; }
     const clockEl = document.getElementById('portal-clock');
     if (!clockEl || clockEl.style.display === 'none') return;
     function updateClock() {
@@ -237,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     updateClock();
-    setInterval(updateClock, 1000);
+    _clockInterval = setInterval(updateClock, 1000);
   }
 
   // 随机一言
@@ -1095,6 +1097,8 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.removeItem('_announcementDismissed');
       saveSiteSettings(settings);
       applySiteSettings(settings);
+      initClock();
+      loadHitokoto();
       syncToWorker();
       showToast('基础设置已保存！');
     });
