@@ -141,9 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s.logoUrl && isSafeURL(s.logoUrl)) {
       if (logoImg) { logoImg.src = s.logoUrl; logoImg.style.display = ''; }
       if (logoSvg) logoSvg.style.display = 'none';
-      // 同步更新浏览器 favicon
+      // 同步更新浏览器 favicon（清除 type 属性防止 SVG type 与 PNG/JPG 冲突）
       let faviconEl = document.querySelector('link[rel="icon"]');
       if (!faviconEl) { faviconEl = document.createElement('link'); faviconEl.rel = 'icon'; document.head.appendChild(faviconEl); }
+      faviconEl.removeAttribute('type');
       faviconEl.href = s.logoUrl;
     } else {
       if (logoImg) logoImg.style.display = 'none';
@@ -229,6 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
+
+  const VALID_STATUS = new Set(['online', 'beta', 'maintain', 'coming']);
+  function safeStatus(val) { return VALID_STATUS.has(val) ? val : 'online'; }
 
   function escapeHTML(str) {
     return String(str ?? '')
@@ -479,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cardMeta = `
         <div class="card-meta-row">
           <span class="card-category-tag">${escapeHTML(getCategoryName(site.category) || site.categoryName || '')}</span>
-          <div class="card-status ${escapeHTML(site.status)}">
+          <div class="card-status ${safeStatus(site.status)}">
             <span class="card-status-dot"></span>
             <span>${escapeHTML(site.statusText)}</span>
           </div>
@@ -555,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function openDetailModal(site) {
     modalGlowBg.style.background = site.bgGradient;
     modalTitle.textContent = site.name;
-    modalStatus.className = `card-status ${escapeHTML(site.status)}`;
+    modalStatus.className = `card-status ${safeStatus(site.status)}`;
     modalStatus.innerHTML = `<span class="card-status-dot"></span><span>${escapeHTML(site.statusText)}</span>`;
     modalDescription.textContent = site.detailedDescription;
 
@@ -1009,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td class="table-site-name">${escapeHTML(site.name)}</td>
         <td><a href="${safeHref}" target="_blank" rel="noopener noreferrer" class="table-url-link">${escapeHTML(site.url)}</a></td>
         <td>
-          <div class="card-status ${escapeHTML(site.status)}" style="background: transparent; border: none; padding: 0;">
+          <div class="card-status ${safeStatus(site.status)}" style="background: transparent; border: none; padding: 0;">
             <span class="card-status-dot"></span>
             <span>${escapeHTML(site.statusText)}</span>
           </div>
