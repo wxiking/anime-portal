@@ -246,25 +246,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const HITOKOTO_FALLBACKS = [
     '「代码如诗，逻辑如画。」— 佚名',
     '「每一行代码都是一个微小的奇迹。」— 佚名',
-    '「在数字的世界里，你是自己的造物主。」— 佚名'
+    '「在数字的世界里，你是自己的造物主。」— 佚名',
+    '「不积跬步，无以至千里。」— 荀子',
+    '「知之者不如好之者，好之者不如乐之者。」— 孔子'
   ];
+  let _hitokotoLoaded = false;
   async function loadHitokoto() {
     const el = document.getElementById('hitokoto-display');
     if (!el) return;
     const s = loadSiteSettings();
-    if (s.hitokotoEnabled === false) { el.style.display = 'none'; return; }
+    if (s.hitokotoEnabled === false) { el.style.display = 'none'; _hitokotoLoaded = false; return; }
+    // 已经加载过内容则不重复请求，避免闪烁
+    if (_hitokotoLoaded && el.textContent) return;
     el.style.display = '';
-    el.textContent = '';
     try {
       const controller = new AbortController();
-      const tid = setTimeout(() => controller.abort(), 5000);
+      const tid = setTimeout(() => controller.abort(), 4000);
       const r = await fetch('https://v1.hitokoto.cn/?encode=json&lang=cn', { signal: controller.signal });
       clearTimeout(tid);
       if (!r.ok) throw new Error();
       const data = await r.json();
-      el.textContent = `「${data.hitokoto}」— ${data.from_who || data.from || '佚名'}`;
+      if (data && data.hitokoto) {
+        el.textContent = `「${data.hitokoto}」— ${data.from_who || data.from || '佚名'}`;
+        _hitokotoLoaded = true;
+      } else {
+        throw new Error('empty');
+      }
     } catch {
       el.textContent = HITOKOTO_FALLBACKS[Math.floor(Math.random() * HITOKOTO_FALLBACKS.length)];
+      _hitokotoLoaded = true;
     }
   }
 
@@ -437,7 +447,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
-    const show = (el, visible) => { if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
+    const show = (el, visible) => {
+      if (!el) return;
+      if (visible) {
+        el.style.display = 'inline-flex';
+        el.style.alignItems = 'center';
+        el.style.gap = '0.4rem';
+        el.style.padding = '0.45rem 1rem';
+        el.style.borderRadius = '20px';
+        el.style.fontSize = '0.82rem';
+        el.style.fontWeight = '600';
+        el.style.whiteSpace = 'nowrap';
+        el.style.flexShrink = '0';
+        el.style.cursor = 'pointer';
+        el.style.textDecoration = 'none';
+        el.style.border = '1px solid rgba(255,255,255,0.12)';
+        el.style.background = 'rgba(255,255,255,0.04)';
+        el.style.color = 'rgba(255,255,255,0.75)';
+        el.style.transition = 'all 0.25s ease';
+      } else {
+        el.style.display = 'none';
+      }
+    };
     const setLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
     // 导航栏 GitHub / 邮箱链接
