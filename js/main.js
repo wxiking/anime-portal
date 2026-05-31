@@ -447,7 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function applyContactInfoToDOM(info) {
-    const show = (el, visible) => { if (el) el.style.display = visible ? '' : 'none'; };
+    const show = (el, visible) => { if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
     const setLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
     // 导航栏 GitHub / 邮箱链接
