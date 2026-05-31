@@ -1327,37 +1327,85 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ==========================================================================
-  // 10. 针对 Cloudflare Pages 的配置导出系统 (data.js Download compiler)
+  // 10. 数据备份与恢复（KV JSON 下载 / 上传）
   // ==========================================================================
 
-  const sidebarExportBtn = document.getElementById('sidebar-export-config');
+  const sidebarBackupBtn = document.getElementById('sidebar-backup');
+  const sidebarRestoreBtn = document.getElementById('sidebar-restore');
+  const restoreFileInput = document.getElementById('restore-file-input');
 
-  if (sidebarExportBtn) {
-    sidebarExportBtn.addEventListener('click', () => {
+  if (sidebarBackupBtn) {
+    sidebarBackupBtn.addEventListener('click', async () => {
       closeMobileSidebar();
+      try {
+        showToast('正在从云端拉取最新数据…', 'info');
+        const r = await fetch(API_URL, { cache: 'no-cache' });
+        if (!r.ok) { showToast('拉取失败，请稍后重试。', 'error'); return; }
+        const data = await r.json();
+        if (!data) { showToast('云端暂无数据。', 'error'); return; }
+        const payload = JSON.stringify({ ...data, backupAt: new Date().toISOString() }, null, 2);
+        const date = new Date().toISOString().slice(0, 10);
+        const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `portal-backup-${date}.json`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        showToast('备份已下载！', 'success');
+      } catch { showToast('网络异常，备份失败。', 'error'); }
+    });
+  }
 
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        websites: websites,
-        categories: categories,
-        contactInfo: loadContactInfo(),
-        siteSettings: loadSiteSettings()
+  if (sidebarRestoreBtn && restoreFileInput) {
+    sidebarRestoreBtn.addEventListener('click', () => {
+      closeMobileSidebar();
+      restoreFileInput.value = '';
+      restoreFileInput.click();
+    });
+
+    restoreFileInput.addEventListener('change', () => {
+      const file = restoreFileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        let data;
+        try { data = JSON.parse(e.target.result); }
+        catch { showToast('文件格式错误，请选择有效的 JSON 备份文件。', 'error'); return; }
+
+        if (!data || typeof data !== 'object' || !Array.isArray(data.websites)) {
+          showToast('备份文件内容无效（缺少 websites 字段）。', 'error'); return;
+        }
+
+        showConfirm(
+          `确认将云端数据恢复为此备份？当前云端内容将被覆盖，操作不可撤销。`,
+          async () => {
+            if (!_adminPassword) { showToast('请先登录再执行恢复操作。', 'error'); return; }
+            try {
+              const r = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_adminPassword}` },
+                body: JSON.stringify({
+                  websites:     Array.isArray(data.websites)    ? data.websites    : [],
+                  categories:   Array.isArray(data.categories)  ? data.categories  : [],
+                  contactInfo:  data.contactInfo  || {},
+                  siteSettings: data.siteSettings || {}
+                })
+              });
+              if (r.ok) {
+                showToast('恢复成功！正在重新加载数据…', 'success');
+                setTimeout(() => window.location.reload(), 1500);
+              } else {
+                showToast(r.status === 401 ? '认证失败，请重新登录。' : '恢复失败，请稍后重试。', 'error');
+              }
+            } catch { showToast('网络异常，恢复失败。', 'error'); }
+          },
+          { title: '确认恢复数据', okText: '确认覆盖' }
+        );
       };
-
-      const fileHeader = `/**\n * 流光星野门户 - 完整导出配置\n * 导出时间：${new Date().toLocaleString()}\n *\n * 使用方法：\n * 1. 用此文件覆盖本地项目的 js/portal-export.js\n * 2. 推送到 GitHub → Cloudflare Pages 自动部署\n * 3. 所有访客立即看到最新内容（网站/分类/联系方式/基础设置全部同步）\n */\n\nvar PORTAL_EXPORT = `;
-      const fileContent = JSON.stringify(exportData, null, 2) + ';\n';
-
-      const blob = new Blob([fileHeader + fileContent], { type: 'application/javascript;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'portal-export.js';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-
-      showToast('本地备份已导出！正常情况下后台修改会自动同步到云端，无需手动导出。', 'info');
+      reader.readAsText(file);
     });
   }
 

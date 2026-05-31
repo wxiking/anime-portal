@@ -95,10 +95,17 @@
             </li>
             <li class="sidebar-group-label">工具</li>
             <li>
-              <button id="sidebar-export-config" class="sidebar-menu-btn" style="color: var(--color-sakura);" title="导出全部配置（网站/分类/联系方式/基础设置），替换 js/portal-export.js 后推送即可同步给所有访客">
+              <button id="sidebar-backup" class="sidebar-menu-btn" title="从云端下载当前所有数据（JSON 格式），可用于本地留存或迁移">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                导出配置
+                备份数据
               </button>
+            </li>
+            <li>
+              <button id="sidebar-restore" class="sidebar-menu-btn" title="从本地 JSON 文件恢复数据到云端，覆盖当前内容">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="3" x2="12" y2="15"/><polyline points="17 8 12 3 7 8"/></svg>
+                恢复数据
+              </button>
+              <input type="file" id="restore-file-input" accept=".json" style="display:none">
             </li>
           </ul>
         </nav>
