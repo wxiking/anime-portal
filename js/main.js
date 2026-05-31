@@ -596,9 +596,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // 失败计数和锁定时间持久化到 sessionStorage，防止刷新绕过
     let loginFailCount = parseInt(sessionStorage.getItem('_loginFails') || '0', 10);
     let loginLockedUntil = parseInt(sessionStorage.getItem('_loginLock') || '0', 10);
+    let lockCountdownTimer = null;
 
     function setLoginError(msg) {
       if (loginErrorMsg) loginErrorMsg.textContent = msg;
+    }
+
+    function startLockCountdown() {
+      if (lockCountdownTimer) clearInterval(lockCountdownTimer);
+      lockCountdownTimer = setInterval(() => {
+        const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
+        if (remaining <= 0) {
+          clearInterval(lockCountdownTimer);
+          lockCountdownTimer = null;
+          setLoginError('');
+        } else {
+          setLoginError(`已锁定，请 ${remaining} 秒后重试。`);
+        }
+      }, 1000);
+    }
+
+    // 页面加载时如果 sessionStorage 里还有锁定，直接显示倒计时
+    if (Date.now() < loginLockedUntil) {
+      const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
+      setLoginError(`已锁定，请 ${remaining} 秒后重试。`);
+      startLockCountdown();
     }
 
     function doLogin(password) {
@@ -637,6 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Date.now() < loginLockedUntil) {
           const remaining = Math.ceil((loginLockedUntil - Date.now()) / 1000);
           setLoginError(`已锁定，请 ${remaining} 秒后重试。`);
+          if (!lockCountdownTimer) startLockCountdown();
           return;
         }
 
@@ -655,6 +678,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loginFailCount = 0;
             sessionStorage.setItem('_loginFails', '0');
             setLoginError('错误次数过多，已锁定 30 秒。');
+            startLockCountdown();
           } else {
             const left = 5 - loginFailCount;
             setLoginError(`密码错误，还可尝试 ${left} 次。`);
