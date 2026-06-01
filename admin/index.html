@@ -109,12 +109,6 @@
               </button>
             </li>
             <li>
-              <button id="sidebar-contact-info" class="sidebar-menu-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                联系方式
-              </button>
-            </li>
-            <li>
               <button id="sidebar-change-password" class="sidebar-menu-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 修改密码
@@ -313,73 +307,7 @@
         </div>
       </section>
 
-      <!-- 联系方式 -->
-      <section id="admin-contact-info-section" class="admin-panel-section" style="display: none;">
-        <div class="admin-panel-card">
-          <h3>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            联系方式管理
-          </h3>
-          <p class="admin-panel-hint">修改后保存，前台联系方式实时同步到云端。留空的项目会自动隐藏，不会在前台显示。</p>
-          <form id="contact-info-form" class="admin-panel-form">
-            <p class="admin-panel-hint" style="margin-top:0;">留空的项目自动隐藏；按钮名称可自由修改，例如把"微信"改成"TG"。</p>
-            <div style="display:grid; grid-template-columns:2fr 1fr; gap:0 1rem;">
-              <div class="form-group">
-                <label class="form-label">GitHub 主页链接（留空则隐藏）</label>
-                <input type="url" id="ci-github" class="form-input" placeholder="https://github.com/username">
-              </div>
-              <div class="form-group">
-                <label class="form-label">按钮名称</label>
-                <input type="text" id="ci-github-label" class="form-input" placeholder="GitHub" maxlength="10">
-              </div>
-              <div class="form-group">
-                <label class="form-label">B站主页链接（留空则隐藏）</label>
-                <input type="url" id="ci-bilibili" class="form-input" placeholder="https://space.bilibili.com/xxxxx">
-              </div>
-              <div class="form-group">
-                <label class="form-label">按钮名称</label>
-                <input type="text" id="ci-bilibili-label" class="form-input" placeholder="B站" maxlength="10">
-              </div>
-              <div class="form-group">
-                <label class="form-label">邮箱地址（留空则隐藏）</label>
-                <input type="email" id="ci-email" class="form-input" placeholder="your@email.com">
-              </div>
-              <div class="form-group">
-                <label class="form-label">按钮名称</label>
-                <input type="text" id="ci-email-label" class="form-input" placeholder="发邮件" maxlength="10">
-              </div>
-              <div class="form-group">
-                <label class="form-label">微信号（留空则隐藏）</label>
-                <input type="text" id="ci-wechat" class="form-input" placeholder="WeChat ID / TG username">
-              </div>
-              <div class="form-group">
-                <label class="form-label">按钮名称</label>
-                <input type="text" id="ci-wechat-label" class="form-input" placeholder="微信" maxlength="10">
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">微信/TG 备注提示语（点击按钮时弹出）</label>
-              <input type="text" id="ci-wechat-note" class="form-input" placeholder="请备注来意~">
-            </div>
-            <div style="display:grid; grid-template-columns:2fr 1fr; gap:0 1rem;">
-              <div class="form-group">
-                <label class="form-label">QQ 交流群号（留空则隐藏）</label>
-                <input type="text" id="ci-qq" class="form-input" placeholder="987654321">
-              </div>
-              <div class="form-group">
-                <label class="form-label">按钮名称</label>
-                <input type="text" id="ci-qq-label" class="form-input" placeholder="QQ群" maxlength="10">
-              </div>
-            </div>
-            <div class="admin-panel-footer">
-              <button type="submit" class="btn-action btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                保存联系方式
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+
 
       <!-- 修改密码 -->
       <section id="admin-change-password-section" class="admin-panel-section" style="display: none;">
@@ -498,6 +426,226 @@
                 </label>
               </label>
             </div>
+
+            <!-- ==================== 社交名片槽位设置 (5个完全自定义槽位) ==================== -->
+            <h4 class="admin-section-divider-title" style="color:var(--color-sakura); font-size:1.1rem; font-weight:800; border-top:1px dashed rgba(255,255,255,0.15); margin-top:2.5rem; padding-top:1.5rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.5rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              社交名片设置
+            </h4>
+            <p class="admin-panel-hint" style="margin-bottom:1.5rem;">配置前台展示的社交媒体按钮。不需要的槽位可直接关闭其开关。支持网页链接跳转、一键复制微信号/群号等丰富行为。</p>
+            
+            <div class="custom-contact-slots-container" style="display:flex; flex-direction:column; gap:1.2rem;">
+              <!-- 槽位 1 -->
+              <div class="contact-slot-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>槽位一</span>
+                    <label class="toggle-switch" style="transform:scale(0.85); transform-origin:right center;">
+                      <input type="checkbox" id="ss-contact-enabled-1" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </label>
+                  <select id="ss-contact-icon-1" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="github">🐙 GitHub</option>
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="bilibili">📺 B站</option>
+                    <option value="wechat">💬 微信</option>
+                    <option value="qq">🐧 QQ</option>
+                    <option value="email">✉️ 邮箱</option>
+                    <option value="link">🌐 网页链接</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-label-1">按钮名称</label>
+                  <input type="text" id="ss-contact-label-1" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="GitHub" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-action-1">行为类型</label>
+                  <select id="ss-contact-action-1" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="link">🔗 网页链接</option>
+                    <option value="copy">📋 一键复制</option>
+                    <option value="email">📧 发送邮件</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-value-1">内容值</label>
+                  <input type="text" id="ss-contact-value-1" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="链接/邮箱/账号值">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-note-1">提示备注（如“请备注来意~”）</label>
+                  <input type="text" id="ss-contact-note-1" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="非必填">
+                </div>
+              </div>
+
+              <!-- 槽位 2 -->
+              <div class="contact-slot-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>槽位二</span>
+                    <label class="toggle-switch" style="transform:scale(0.85); transform-origin:right center;">
+                      <input type="checkbox" id="ss-contact-enabled-2" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </label>
+                  <select id="ss-contact-icon-2" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="github">🐙 GitHub</option>
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="bilibili">📺 B站</option>
+                    <option value="wechat">💬 微信</option>
+                    <option value="qq">🐧 QQ</option>
+                    <option value="email">✉️ 邮箱</option>
+                    <option value="link">🌐 网页链接</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-label-2">按钮名称</label>
+                  <input type="text" id="ss-contact-label-2" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="TG" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-action-2">行为类型</label>
+                  <select id="ss-contact-action-2" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="link">🔗 网页链接</option>
+                    <option value="copy">📋 一键复制</option>
+                    <option value="email">📧 发送邮件</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-value-2">内容值</label>
+                  <input type="text" id="ss-contact-value-2" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="链接/邮箱/账号值">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-note-2">提示备注（如“请备注来意~”）</label>
+                  <input type="text" id="ss-contact-note-2" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="非必填">
+                </div>
+              </div>
+
+              <!-- 槽位 3 -->
+              <div class="contact-slot-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>槽位三</span>
+                    <label class="toggle-switch" style="transform:scale(0.85); transform-origin:right center;">
+                      <input type="checkbox" id="ss-contact-enabled-3" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </label>
+                  <select id="ss-contact-icon-3" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="github">🐙 GitHub</option>
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="bilibili">📺 B站</option>
+                    <option value="wechat">💬 微信</option>
+                    <option value="qq">🐧 QQ</option>
+                    <option value="email">✉️ 邮箱</option>
+                    <option value="link">🌐 网页链接</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-label-3">按钮名称</label>
+                  <input type="text" id="ss-contact-label-3" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="发邮件" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-action-3">行为类型</label>
+                  <select id="ss-contact-action-3" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="link">🔗 网页链接</option>
+                    <option value="copy">📋 一键复制</option>
+                    <option value="email">📧 发送邮件</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-value-3">内容值</label>
+                  <input type="text" id="ss-contact-value-3" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="链接/邮箱/账号值">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-note-3">提示备注（如“请备注来意~”）</label>
+                  <input type="text" id="ss-contact-note-3" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="非必填">
+                </div>
+              </div>
+
+              <!-- 槽位 4 -->
+              <div class="contact-slot-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>槽位四</span>
+                    <label class="toggle-switch" style="transform:scale(0.85); transform-origin:right center;">
+                      <input type="checkbox" id="ss-contact-enabled-4" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </label>
+                  <select id="ss-contact-icon-4" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="github">🐙 GitHub</option>
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="bilibili">📺 B站</option>
+                    <option value="wechat">💬 微信</option>
+                    <option value="qq">🐧 QQ</option>
+                    <option value="email">✉️ 邮箱</option>
+                    <option value="link">🌐 网页链接</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-label-4">按钮名称</label>
+                  <input type="text" id="ss-contact-label-4" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="微信" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-action-4">行为类型</label>
+                  <select id="ss-contact-action-4" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="link">🔗 网页链接</option>
+                    <option value="copy">📋 一键复制</option>
+                    <option value="email">📧 发送邮件</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-value-4">内容值</label>
+                  <input type="text" id="ss-contact-value-4" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="链接/邮箱/账号值">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-note-4">提示备注（如“请备注来意~”）</label>
+                  <input type="text" id="ss-contact-note-4" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="非必填">
+                </div>
+              </div>
+
+              <!-- 槽位 5 -->
+              <div class="contact-slot-row">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" style="display:flex; align-items:center; gap:0.5rem; justify-content:space-between; margin-bottom:0.4rem;">
+                    <span>槽位五</span>
+                    <label class="toggle-switch" style="transform:scale(0.85); transform-origin:right center;">
+                      <input type="checkbox" id="ss-contact-enabled-5" checked>
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </label>
+                  <select id="ss-contact-icon-5" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="github">🐙 GitHub</option>
+                    <option value="telegram">✈️ Telegram</option>
+                    <option value="bilibili">📺 B站</option>
+                    <option value="wechat">💬 微信</option>
+                    <option value="qq">🐧 QQ</option>
+                    <option value="email">✉️ 邮箱</option>
+                    <option value="link">🌐 网页链接</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-label-5">按钮名称</label>
+                  <input type="text" id="ss-contact-label-5" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="TG群" maxlength="10">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-action-5">行为类型</label>
+                  <select id="ss-contact-action-5" class="form-select" style="padding:0.5rem 0.75rem;">
+                    <option value="link">🔗 网页链接</option>
+                    <option value="copy">📋 一键复制</option>
+                    <option value="email">📧 发送邮件</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-value-5">内容值</label>
+                  <input type="text" id="ss-contact-value-5" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="链接/邮箱/账号值">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" for="ss-contact-note-5">提示备注（如“请备注来意~”）</label>
+                  <input type="text" id="ss-contact-note-5" class="form-input" style="padding:0.5rem 0.75rem;" placeholder="非必填">
+                </div>
+              </div>
+            </div>
+
             <div class="admin-panel-footer">
               <button type="submit" class="btn-action btn-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>

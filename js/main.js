@@ -424,80 +424,120 @@ document.addEventListener('DOMContentLoaded', () => {
     _toastTimer = setTimeout(() => toast.classList.remove('active'), 3500);
   }
 
-  // 联系方式默认值
+  // 社交联系槽位预设 SVG 图标库
+  const SOCIAL_SVG_MAP = {
+    github: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>',
+    telegram: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+    bilibili: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="15" rx="2"/><path d="M8 5V3M16 5V3"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>',
+    wechat: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6.1H3c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2z"/><path d="M23 9v6"/><path d="M8 12v.01"/><path d="M12 12v.01"/></svg>',
+    qq: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>',
+    email: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+    link: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>'
+  };
+
+  // 联系方式槽位默认数据结构 (包含 5 个槽位)
   const DEFAULT_CONTACT_INFO = {
-    githubUrl: '',
-    bilibiliUrl: '',
-    email: '',
-    wechatId: '',
-    wechatNote: '请备注来意~',
-    qqGroup: '',
-    githubLabel: 'GitHub',
-    bilibiliLabel: 'B站',
-    emailLabel: '发邮件',
-    wechatLabel: '微信',
-    qqLabel: 'QQ群'
+    slots: [
+      { enabled: true, icon: 'github', label: 'GitHub', action: 'link', value: '', note: '' },
+      { enabled: true, icon: 'telegram', label: 'TG', action: 'link', value: '', note: '' },
+      { enabled: true, icon: 'email', label: '发邮件', action: 'email', value: '', note: '' },
+      { enabled: true, icon: 'wechat', label: '微信', action: 'copy', value: '', note: '联系时请说明来意~' },
+      { enabled: true, icon: 'telegram', label: 'TG群', action: 'link', value: '', note: '' }
+    ]
   };
 
   function loadContactInfo() {
     const saved = localStorage.getItem(CONTACT_INFO_KEY);
     const exportedDefault = (window.PORTAL_EXPORT && window.PORTAL_EXPORT.contactInfo) || null;
-    try { return saved ? JSON.parse(saved) : (exportedDefault || { ...DEFAULT_CONTACT_INFO }); }
-    catch { return exportedDefault || { ...DEFAULT_CONTACT_INFO }; }
+    let data;
+    try { data = saved ? JSON.parse(saved) : exportedDefault; }
+    catch { data = null; }
+
+    if (!data) {
+      return { ...DEFAULT_CONTACT_INFO };
+    }
+
+    // 极其平滑的旧数据架构自动升级迁移
+    if (!data.slots) {
+      data = {
+        slots: [
+          { enabled: !!data.githubUrl, icon: 'github', label: data.githubLabel || 'GitHub', action: 'link', value: data.githubUrl || '', note: '' },
+          { enabled: !!data.bilibiliUrl, icon: 'bilibili', label: data.bilibiliLabel || 'B站', action: 'link', value: data.bilibiliUrl || '', note: '' },
+          { enabled: !!data.email, icon: 'email', label: data.emailLabel || '发邮件', action: 'email', value: data.email || '', note: '' },
+          { enabled: !!data.wechatId, icon: 'wechat', label: data.wechatLabel || '微信', action: 'copy', value: data.wechatId || '', note: data.wechatNote || '请备注来意~' },
+          { enabled: !!data.qqGroup, icon: 'qq', label: data.qqLabel || 'QQ群', action: 'link', value: data.qqGroup || '', note: '' }
+        ]
+      };
+    }
+    return data;
   }
 
   function applyContactInfoToDOM(info) {
     const show = (el, visible) => { if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
-    const setLabel = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
 
-    // 导航栏 GitHub / 邮箱链接
+    // 1. 动态获取并设置导航栏 GitHub / 邮箱（查找匹配槽位作为兼容兜底）
     const navGithub = document.getElementById('nav-github-link');
     const navEmail = document.getElementById('nav-email-link');
-    const safeGithub = isSafeURL(info.githubUrl) ? info.githubUrl : '';
-    if (navGithub) { navGithub.href = safeGithub || '#'; show(navGithub, !!safeGithub); }
-    if (navEmail) { navEmail.href = `mailto:${info.email || ''}`; show(navEmail, !!info.email); }
 
-    // 个人资料卡社交按钮（有值显示，空则隐藏；label 可自定义）
-    const socialGithub = document.getElementById('social-github-btn');
-    if (socialGithub) {
-      socialGithub.href = safeGithub || '#';
-      show(socialGithub, !!safeGithub);
-      setLabel('social-github-label', info.githubLabel || DEFAULT_CONTACT_INFO.githubLabel);
+    let firstGithubUrl = '';
+    let firstEmailVal = '';
+
+    if (info && Array.isArray(info.slots)) {
+      const gitSlot = info.slots.find(s => s.enabled && s.icon === 'github' && s.value);
+      if (gitSlot) firstGithubUrl = isSafeURL(gitSlot.value) ? gitSlot.value : '';
+      
+      const emailSlot = info.slots.find(s => s.enabled && s.action === 'email' && s.value);
+      if (emailSlot) firstEmailVal = emailSlot.value;
     }
 
-    const socialBilibili = document.getElementById('social-bilibili-btn');
-    const safeBilibili = isSafeURL(info.bilibiliUrl) ? info.bilibiliUrl : '';
-    if (socialBilibili) {
-      socialBilibili.href = safeBilibili || '#';
-      show(socialBilibili, !!safeBilibili);
-      setLabel('social-bilibili-label', info.bilibiliLabel || DEFAULT_CONTACT_INFO.bilibiliLabel);
+    if (navGithub) { navGithub.href = firstGithubUrl || '#'; show(navGithub, !!firstGithubUrl); }
+    if (navEmail) { navEmail.href = firstEmailVal ? `mailto:${firstEmailVal}` : '#'; show(navEmail, !!firstEmailVal); }
+
+    // 2. 动态渲染前台社交名片按钮组，完美自适应
+    const matrixContainer = document.getElementById('frontend-social-matrix');
+    if (matrixContainer) {
+      matrixContainer.innerHTML = '';
+      if (info && Array.isArray(info.slots)) {
+        info.slots.forEach(slot => {
+          if (!slot.enabled || !slot.value) return;
+
+          let btn;
+          if (slot.action === 'copy') {
+            // 一键复制行为：渲染为 span 按钮，绑定 clipboard 复制与 Toast 成功反馈
+            btn = document.createElement('span');
+            btn.className = 'social-button';
+            btn.style.cursor = 'pointer';
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              navigator.clipboard.writeText(slot.value).then(() => {
+                const noteText = slot.note ? ` (${slot.note})` : '';
+                showToast(`✅ 已自动复制${slot.label}：${slot.value}${noteText}`, 'success');
+              }).catch(() => {
+                const noteText = slot.note ? ` (${slot.note})` : '';
+                showToast(`${slot.label}：${slot.value}${noteText}`, 'info');
+              });
+            });
+          } else {
+            // 链接或邮件行为：渲染为 a 链接，设置 href
+            btn = document.createElement('a');
+            btn.className = 'social-button';
+            if (slot.action === 'email') {
+              btn.href = `mailto:${slot.value}`;
+            } else {
+              btn.href = isSafeURL(slot.value) ? slot.value : '#';
+              btn.target = '_blank';
+              btn.rel = 'noopener noreferrer';
+            }
+          }
+
+          // 填充 SVG 图标与文本
+          const svgContent = SOCIAL_SVG_MAP[slot.icon] || SOCIAL_SVG_MAP['link'];
+          btn.innerHTML = `${svgContent} <span>${escapeHTML(slot.label)}</span>`;
+          matrixContainer.appendChild(btn);
+        });
+      }
     }
-
-    const socialEmail = document.getElementById('social-email-btn');
-    if (socialEmail) {
-      socialEmail.href = `mailto:${info.email || ''}`;
-      show(socialEmail, !!info.email);
-      setLabel('social-email-label', info.emailLabel || DEFAULT_CONTACT_INFO.emailLabel);
-    }
-
-    const socialWechat = document.getElementById('social-wechat-btn');
-    show(socialWechat, !!(info.wechatId));
-    setLabel('social-wechat-label', info.wechatLabel || DEFAULT_CONTACT_INFO.wechatLabel);
-
-    const socialQQ = document.getElementById('social-qq-btn');
-    show(socialQQ, !!(info.qqGroup));
-    setLabel('social-qq-label', info.qqLabel || DEFAULT_CONTACT_INFO.qqLabel);
   }
-
-  // 全局函数供 onclick 使用
-  window.showWechatInfo = function() {
-    const info = loadContactInfo();
-    showToast(`微信：${info.wechatId}（${info.wechatNote}）`, 'info');
-  };
-  window.showQQInfo = function() {
-    const info = loadContactInfo();
-    showToast(`QQ群：${info.qqGroup}`, 'info');
-  };
 
   applyContactInfoToDOM(loadContactInfo());
   applySiteSettings(loadSiteSettings());
@@ -560,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (Array.isArray(data.categories)) { categories = data.categories; saveCategories(categories); changed = true; }
       if (data.contactInfo && typeof data.contactInfo === 'object') {
         localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(data.contactInfo));
-        applyContactInfoToDOM(data.contactInfo);
+        applyContactInfoToDOM(loadContactInfo());
       }
       if (data.siteSettings && typeof data.siteSettings === 'object') {
         localStorage.setItem(SITE_SETTINGS_KEY, JSON.stringify(data.siteSettings));
@@ -1023,22 +1063,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebarWebsitesBtn = document.getElementById('sidebar-websites');
   const sidebarAddNewBtn = document.getElementById('sidebar-add-new');
   const sidebarCategoriesBtn = document.getElementById('sidebar-categories');
-  const sidebarContactInfoBtn = document.getElementById('sidebar-contact-info');
   const sidebarChangePasswordBtn = document.getElementById('sidebar-change-password');
   const sidebarSiteSettingsBtn = document.getElementById('sidebar-site-settings');
   const adminCategoriesSection = document.getElementById('admin-categories-section');
-  const adminContactSection = document.getElementById('admin-contact-info-section');
   const adminChangePasswordSection = document.getElementById('admin-change-password-section');
   const adminSiteSettingsSection = document.getElementById('admin-site-settings-section');
   const adminViewportTitle = document.querySelector('.admin-viewport-title');
   const adminHeaderActions = document.querySelector('.admin-header-actions');
 
-  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarContactInfoBtn, sidebarChangePasswordBtn, sidebarSiteSettingsBtn];
+  const ALL_SIDEBAR_BTNS = [sidebarWebsitesBtn, sidebarAddNewBtn, sidebarCategoriesBtn, sidebarChangePasswordBtn, sidebarSiteSettingsBtn];
 
   function showAdminSection(section) {
     adminSplitBox.style.display = 'none';
     if (adminCategoriesSection) adminCategoriesSection.style.display = 'none';
-    if (adminContactSection) adminContactSection.style.display = 'none';
     if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'none';
     if (adminSiteSettingsSection) adminSiteSettingsSection.style.display = 'none';
     ALL_SIDEBAR_BTNS.forEach(b => b && b.classList.remove('active'));
@@ -1054,11 +1091,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (adminViewportTitle) adminViewportTitle.textContent = '分类管理';
       if (sidebarCategoriesBtn) sidebarCategoriesBtn.classList.add('active');
       renderCategoriesList();
-    } else if (section === 'contact-info') {
-      if (adminContactSection) adminContactSection.style.display = 'flex';
-      if (adminViewportTitle) adminViewportTitle.textContent = '联系方式';
-      if (sidebarContactInfoBtn) sidebarContactInfoBtn.classList.add('active');
-      loadContactInfoIntoForm();
     } else if (section === 'change-password') {
       if (adminChangePasswordSection) adminChangePasswordSection.style.display = 'flex';
       if (adminViewportTitle) adminViewportTitle.textContent = '修改密码';
@@ -1079,14 +1111,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeMobileSidebar();
       closeAdminEditPanel();
       showAdminSection('categories');
-    });
-  }
-
-  if (sidebarContactInfoBtn) {
-    sidebarContactInfoBtn.addEventListener('click', () => {
-      closeMobileSidebar();
-      closeAdminEditPanel();
-      showAdminSection('contact-info');
     });
   }
 
@@ -1124,6 +1148,27 @@ document.addEventListener('DOMContentLoaded', () => {
     chk('ss-clock-enabled', s.clockEnabled !== false);
     chk('ss-hitokoto-enabled', s.hitokotoEnabled !== false);
     chk('ss-particles-enabled', s.particlesEnabled !== false);
+
+    // 额外载入社交名片槽位配置，扁平化展示于基础设置底部
+    const info = loadContactInfo();
+    if (info && Array.isArray(info.slots)) {
+      info.slots.forEach((slot, index) => {
+        const slotIdx = index + 1;
+        const enabledEl = document.getElementById(`ss-contact-enabled-${slotIdx}`);
+        const iconEl = document.getElementById(`ss-contact-icon-${slotIdx}`);
+        const labelEl = document.getElementById(`ss-contact-label-${slotIdx}`);
+        const actionEl = document.getElementById(`ss-contact-action-${slotIdx}`);
+        const valueEl = document.getElementById(`ss-contact-value-${slotIdx}`);
+        const noteEl = document.getElementById(`ss-contact-note-${slotIdx}`);
+
+        if (enabledEl) enabledEl.checked = !!slot.enabled;
+        if (iconEl) iconEl.value = slot.icon || 'link';
+        if (labelEl) labelEl.value = slot.label || '';
+        if (actionEl) actionEl.value = slot.action || 'link';
+        if (valueEl) valueEl.value = slot.value || '';
+        if (noteEl) noteEl.value = slot.note || '';
+      });
+    }
   }
 
   const siteSettingsForm = document.getElementById('site-settings-form');
@@ -1148,6 +1193,22 @@ document.addEventListener('DOMContentLoaded', () => {
         hitokotoEnabled: chkVal('ss-hitokoto-enabled', true),
         particlesEnabled: chkVal('ss-particles-enabled', true)
       };
+      
+      // 同时提取并打包保存社交槽位配置
+      const slots = [];
+      for (let i = 1; i <= 5; i++) {
+        const enabled = chkVal(`ss-contact-enabled-${i}`, false);
+        const icon = g(`ss-contact-icon-${i}`) || 'link';
+        const label = g(`ss-contact-label-${i}`);
+        const action = g(`ss-contact-action-${i}`) || 'link';
+        const value = g(`ss-contact-value-${i}`);
+        const note = g(`ss-contact-note-${i}`);
+        slots.push({ enabled, icon, label, action, value, note });
+      }
+      const contactInfo = { slots };
+      localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(contactInfo));
+      applyContactInfoToDOM(contactInfo);
+
       // 公告内容更改时，重置用户关闭状态
       sessionStorage.removeItem('_announcementDismissed');
       saveSiteSettings(settings);
@@ -1155,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
       initClock();
       loadHitokoto();
       syncToWorker();
-      showToast('基础设置已保存！');
+      showToast('设置与社交名片已全部保存！');
     });
   }
 
@@ -1611,50 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ==========================================================================
-  // 9. 联系方式管理系统
-  // ==========================================================================
-
-  function loadContactInfoIntoForm() {
-    const info = loadContactInfo();
-    const f = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    f('ci-github', info.githubUrl);
-    f('ci-github-label', info.githubLabel);
-    f('ci-bilibili', info.bilibiliUrl);
-    f('ci-bilibili-label', info.bilibiliLabel);
-    f('ci-email', info.email);
-    f('ci-email-label', info.emailLabel);
-    f('ci-wechat', info.wechatId);
-    f('ci-wechat-label', info.wechatLabel);
-    f('ci-wechat-note', info.wechatNote);
-    f('ci-qq', info.qqGroup);
-    f('ci-qq-label', info.qqLabel);
-  }
-
-  const contactInfoForm = document.getElementById('contact-info-form');
-  if (contactInfoForm) {
-    contactInfoForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
-      const info = {
-        githubUrl: g('ci-github'),
-        githubLabel: g('ci-github-label') || DEFAULT_CONTACT_INFO.githubLabel,
-        bilibiliUrl: g('ci-bilibili'),
-        bilibiliLabel: g('ci-bilibili-label') || DEFAULT_CONTACT_INFO.bilibiliLabel,
-        email: g('ci-email'),
-        emailLabel: g('ci-email-label') || DEFAULT_CONTACT_INFO.emailLabel,
-        wechatId: g('ci-wechat'),
-        wechatLabel: g('ci-wechat-label') || DEFAULT_CONTACT_INFO.wechatLabel,
-        wechatNote: g('ci-wechat-note') || DEFAULT_CONTACT_INFO.wechatNote,
-        qqGroup: g('ci-qq'),
-        qqLabel: g('ci-qq-label') || DEFAULT_CONTACT_INFO.qqLabel
-      };
-      localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(info));
-      applyContactInfoToDOM(info);
-      syncToWorker();
-      showToast('联系方式已保存！');
-    });
-  }
+  // 移除了单独的联系方式管理接口绑定
 
   // ==========================================================================
   // 9. 修改密码系统
