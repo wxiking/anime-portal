@@ -435,14 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
     link: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>'
   };
 
-  // 联系方式槽位默认数据结构 (包含 5 个槽位)
+  // 联系方式槽位默认数据（5个槽位，仅存 enabled/label/value）
   const DEFAULT_CONTACT_INFO = {
     slots: [
-      { enabled: true, icon: 'github', label: 'GitHub', action: 'link', value: '', note: '' },
-      { enabled: true, icon: 'telegram', label: 'TG', action: 'link', value: '', note: '' },
-      { enabled: true, icon: 'email', label: '发邮件', action: 'email', value: '', note: '' },
-      { enabled: true, icon: 'wechat', label: '微信', action: 'copy', value: '', note: '联系时请说明来意~' },
-      { enabled: true, icon: 'telegram', label: 'TG群', action: 'link', value: '', note: '' }
+      { enabled: false, label: 'GitHub', value: '' },
+      { enabled: false, label: 'B站', value: '' },
+      { enabled: false, label: '发邮件', value: '' },
+      { enabled: false, label: '微信', value: '' },
+      { enabled: false, label: 'QQ群', value: '' }
     ]
   };
 
@@ -453,90 +453,95 @@ document.addEventListener('DOMContentLoaded', () => {
     try { data = saved ? JSON.parse(saved) : exportedDefault; }
     catch { data = null; }
 
-    if (!data) {
-      return { ...DEFAULT_CONTACT_INFO };
+    if (!data) return { slots: DEFAULT_CONTACT_INFO.slots.map(s => ({ ...s })) };
+
+    // 旧格式一（最初版，有 githubUrl/bilibiliUrl 等字段）
+    if (!data.slots) {
+      return { slots: [
+        { enabled: !!data.githubUrl, label: data.githubLabel || 'GitHub', value: data.githubUrl || '' },
+        { enabled: !!data.bilibiliUrl, label: data.bilibiliLabel || 'B站', value: data.bilibiliUrl || '' },
+        { enabled: !!data.email, label: data.emailLabel || '发邮件', value: data.email || '' },
+        { enabled: !!data.wechatId, label: data.wechatLabel || '微信', value: data.wechatId || '' },
+        { enabled: !!data.qqGroup, label: data.qqLabel || 'QQ群', value: data.qqGroup || '' }
+      ]};
     }
 
-    // 极其平滑的旧数据架构自动升级迁移
-    if (!data.slots) {
-      data = {
-        slots: [
-          { enabled: !!data.githubUrl, icon: 'github', label: data.githubLabel || 'GitHub', action: 'link', value: data.githubUrl || '', note: '' },
-          { enabled: !!data.bilibiliUrl, icon: 'bilibili', label: data.bilibiliLabel || 'B站', action: 'link', value: data.bilibiliUrl || '', note: '' },
-          { enabled: !!data.email, icon: 'email', label: data.emailLabel || '发邮件', action: 'email', value: data.email || '', note: '' },
-          { enabled: !!data.wechatId, icon: 'wechat', label: data.wechatLabel || '微信', action: 'copy', value: data.wechatId || '', note: data.wechatNote || '请备注来意~' },
-          { enabled: !!data.qqGroup, icon: 'qq', label: data.qqLabel || 'QQ群', action: 'link', value: data.qqGroup || '', note: '' }
-        ]
-      };
+    // 旧格式二（Google AI 版，slots 里带 icon/action/note 字段）
+    if (data.slots.length > 0 && 'icon' in data.slots[0]) {
+      return { slots: data.slots.map(s => ({ enabled: !!s.enabled, label: s.label || '', value: s.value || '' })) };
     }
+
     return data;
+  }
+
+  // 根据名称自动推断图标
+  function _autoIcon(label) {
+    const l = (label || '').toLowerCase();
+    if (l.includes('github') || l.includes('git')) return 'github';
+    if (l.includes('bilibili') || l.includes('b站') || l.includes('哔哩')) return 'bilibili';
+    if (l.includes('telegram') || l.includes('tg')) return 'telegram';
+    if (l.includes('wechat') || l.includes('微信') || l.includes('wx')) return 'wechat';
+    if (l.includes('qq')) return 'qq';
+    if (l.includes('mail') || l.includes('email') || l.includes('邮')) return 'email';
+    return 'link';
+  }
+
+  // 根据值自动推断行为：http/https → 新标签链接；含@ → 邮件；其他 → 复制
+  function _autoAction(value) {
+    if (!value) return 'link';
+    if (isSafeURL(value)) return 'link';
+    if (value.includes('@')) return 'email';
+    return 'copy';
   }
 
   function applyContactInfoToDOM(info) {
     const show = (el, visible) => { if (el) el.style.display = visible ? 'inline-flex' : 'none'; };
+    const slots = (info && Array.isArray(info.slots)) ? info.slots : [];
 
-    // 1. 动态获取并设置导航栏 GitHub / 邮箱（查找匹配槽位作为兼容兜底）
+    // 导航栏 GitHub / 邮箱：找第一个匹配的启用槽位
     const navGithub = document.getElementById('nav-github-link');
     const navEmail = document.getElementById('nav-email-link');
-
-    let firstGithubUrl = '';
-    let firstEmailVal = '';
-
-    if (info && Array.isArray(info.slots)) {
-      const gitSlot = info.slots.find(s => s.enabled && s.icon === 'github' && s.value);
-      if (gitSlot) firstGithubUrl = isSafeURL(gitSlot.value) ? gitSlot.value : '';
-      
-      const emailSlot = info.slots.find(s => s.enabled && s.action === 'email' && s.value);
-      if (emailSlot) firstEmailVal = emailSlot.value;
+    const gitSlot = slots.find(s => s.enabled && s.value && isSafeURL(s.value) && _autoIcon(s.label) === 'github');
+    const emailSlot = slots.find(s => s.enabled && s.value && _autoAction(s.value) === 'email');
+    if (navGithub) { navGithub.href = gitSlot ? gitSlot.value : '#'; show(navGithub, !!gitSlot); }
+    if (navEmail) {
+      const ev = emailSlot ? emailSlot.value.replace(/^mailto:/, '') : '';
+      navEmail.href = ev ? `mailto:${ev}` : '#';
+      show(navEmail, !!ev);
     }
 
-    if (navGithub) { navGithub.href = firstGithubUrl || '#'; show(navGithub, !!firstGithubUrl); }
-    if (navEmail) { navEmail.href = firstEmailVal ? `mailto:${firstEmailVal}` : '#'; show(navEmail, !!firstEmailVal); }
-
-    // 2. 动态渲染前台社交名片按钮组，完美自适应
+    // 前台社交按钮动态渲染
     const matrixContainer = document.getElementById('frontend-social-matrix');
-    if (matrixContainer) {
-      matrixContainer.innerHTML = '';
-      if (info && Array.isArray(info.slots)) {
-        info.slots.forEach(slot => {
-          if (!slot.enabled || !slot.value) return;
-
-          let btn;
-          if (slot.action === 'copy') {
-            // 一键复制行为：渲染为 span 按钮，绑定 clipboard 复制与 Toast 成功反馈
-            btn = document.createElement('span');
-            btn.className = 'social-button';
-            btn.style.cursor = 'pointer';
-            btn.addEventListener('click', (e) => {
-              e.preventDefault();
-              navigator.clipboard.writeText(slot.value).then(() => {
-                const noteText = slot.note ? ` (${slot.note})` : '';
-                showToast(`✅ 已自动复制${slot.label}：${slot.value}${noteText}`, 'success');
-              }).catch(() => {
-                const noteText = slot.note ? ` (${slot.note})` : '';
-                showToast(`${slot.label}：${slot.value}${noteText}`, 'info');
-              });
-            });
-          } else {
-            // 链接或邮件行为：渲染为 a 链接，设置 href
-            btn = document.createElement('a');
-            btn.className = 'social-button';
-            if (slot.action === 'email') {
-              btn.href = `mailto:${slot.value}`;
-            } else {
-              btn.href = isSafeURL(slot.value) ? slot.value : '#';
-              btn.target = '_blank';
-              btn.rel = 'noopener noreferrer';
-            }
-          }
-
-          // 填充 SVG 图标与文本
-          const svgContent = SOCIAL_SVG_MAP[slot.icon] || SOCIAL_SVG_MAP['link'];
-          btn.innerHTML = `${svgContent} <span>${escapeHTML(slot.label)}</span>`;
-          matrixContainer.appendChild(btn);
+    if (!matrixContainer) return;
+    matrixContainer.innerHTML = '';
+    slots.forEach(slot => {
+      if (!slot.enabled || !slot.value) return;
+      const action = _autoAction(slot.value);
+      let btn;
+      if (action === 'copy') {
+        btn = document.createElement('span');
+        btn.className = 'social-button';
+        btn.style.cursor = 'pointer';
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(slot.value)
+            .then(() => showToast(`已复制 ${slot.label}：${slot.value}`, 'success'))
+            .catch(() => showToast(`${slot.label}：${slot.value}`, 'info'));
         });
+      } else {
+        btn = document.createElement('a');
+        btn.className = 'social-button';
+        if (action === 'email') {
+          btn.href = `mailto:${slot.value.replace(/^mailto:/, '')}`;
+        } else {
+          btn.href = slot.value;
+          btn.target = '_blank';
+          btn.rel = 'noopener noreferrer';
+        }
       }
-    }
+      const svg = SOCIAL_SVG_MAP[_autoIcon(slot.label)] || SOCIAL_SVG_MAP['link'];
+      btn.innerHTML = `${svg} <span>${escapeHTML(slot.label)}</span>`;
+      matrixContainer.appendChild(btn);
+    });
   }
 
   applyContactInfoToDOM(loadContactInfo());
@@ -1149,24 +1154,17 @@ document.addEventListener('DOMContentLoaded', () => {
     chk('ss-hitokoto-enabled', s.hitokotoEnabled !== false);
     chk('ss-particles-enabled', s.particlesEnabled !== false);
 
-    // 额外载入社交名片槽位配置，扁平化展示于基础设置底部
+    // 载入社交名片槽位配置
     const info = loadContactInfo();
     if (info && Array.isArray(info.slots)) {
       info.slots.forEach((slot, index) => {
-        const slotIdx = index + 1;
-        const enabledEl = document.getElementById(`ss-contact-enabled-${slotIdx}`);
-        const iconEl = document.getElementById(`ss-contact-icon-${slotIdx}`);
-        const labelEl = document.getElementById(`ss-contact-label-${slotIdx}`);
-        const actionEl = document.getElementById(`ss-contact-action-${slotIdx}`);
-        const valueEl = document.getElementById(`ss-contact-value-${slotIdx}`);
-        const noteEl = document.getElementById(`ss-contact-note-${slotIdx}`);
-
+        const i = index + 1;
+        const enabledEl = document.getElementById(`ss-contact-enabled-${i}`);
+        const labelEl = document.getElementById(`ss-contact-label-${i}`);
+        const valueEl = document.getElementById(`ss-contact-value-${i}`);
         if (enabledEl) enabledEl.checked = !!slot.enabled;
-        if (iconEl) iconEl.value = slot.icon || 'link';
         if (labelEl) labelEl.value = slot.label || '';
-        if (actionEl) actionEl.value = slot.action || 'link';
         if (valueEl) valueEl.value = slot.value || '';
-        if (noteEl) noteEl.value = slot.note || '';
       });
     }
   }
@@ -1194,16 +1192,14 @@ document.addEventListener('DOMContentLoaded', () => {
         particlesEnabled: chkVal('ss-particles-enabled', true)
       };
       
-      // 同时提取并打包保存社交槽位配置
+      // 提取并保存社交名片槽位
       const slots = [];
       for (let i = 1; i <= 5; i++) {
-        const enabled = chkVal(`ss-contact-enabled-${i}`, false);
-        const icon = g(`ss-contact-icon-${i}`) || 'link';
-        const label = g(`ss-contact-label-${i}`);
-        const action = g(`ss-contact-action-${i}`) || 'link';
-        const value = g(`ss-contact-value-${i}`);
-        const note = g(`ss-contact-note-${i}`);
-        slots.push({ enabled, icon, label, action, value, note });
+        slots.push({
+          enabled: chkVal(`ss-contact-enabled-${i}`, false),
+          label: g(`ss-contact-label-${i}`),
+          value: g(`ss-contact-value-${i}`)
+        });
       }
       const contactInfo = { slots };
       localStorage.setItem(CONTACT_INFO_KEY, JSON.stringify(contactInfo));
