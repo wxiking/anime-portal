@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let websites = [];
   const STORAGE_KEY = 'anime_websites_portal_data';
   const CONTACT_INFO_KEY = 'portalContactInfo';
-  const PASSWORD_OVERRIDE_KEY = 'adminPasswordHashOverride';
   const CATEGORIES_KEY = 'portalCategories';
   const SITE_SETTINGS_KEY = 'portalSiteSettings';
   const CLICK_STATS_KEY = 'portalClickStats';
@@ -85,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
     hitokotoEnabled: true,
     particlesEnabled: true
   };
-  let ADMIN_PASSWORD_HASH = localStorage.getItem(PASSWORD_OVERRIDE_KEY) || (window.SITE_CONFIG || {}).adminPasswordHash || '';
 
   // 默认分类（与原始数据的 category ID 对应）
   const DEFAULT_CATEGORIES = [
@@ -952,10 +950,7 @@ document.addEventListener('DOMContentLoaded', () => {
             body: JSON.stringify({ newHash })
           });
           if (!resp.ok) { showErr('保存失败，请稍后重试。'); return; }
-          // 保存成功，更新本地哈希并自动登录
-          ADMIN_PASSWORD_HASH = newHash;
           serverHashEmpty = false;
-          localStorage.setItem(PASSWORD_OVERRIDE_KEY, newHash);
           doLogin(newVal);
         } catch { showErr('网络异常，请稍后重试。'); }
       });

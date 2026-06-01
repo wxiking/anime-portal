@@ -41,6 +41,15 @@ export async function onRequestGet({ env }) {
 export async function onRequestPost({ request, env }) {
   if (!env.PORTAL_DATA) return jsonResponse({ error: 'KV not configured' }, 503);
 
+  // IP rate limiting: max 10 verify attempts per minute
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const rateKey = `_ratelimit_verify:${ip}`;
+  try {
+    const current = parseInt(await env.PORTAL_DATA.get(rateKey) || '0', 10);
+    if (current >= 10) return jsonResponse({ error: 'Too many requests' }, 429);
+    await env.PORTAL_DATA.put(rateKey, String(current + 1), { expirationTtl: 60 });
+  } catch { /* KV error — allow through rather than blocking legitimate users */ }
+
   let body;
   try { body = await request.json(); }
   catch { return jsonResponse({ error: 'Invalid JSON' }, 400); }
