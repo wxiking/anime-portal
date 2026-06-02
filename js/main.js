@@ -1492,6 +1492,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // 一键自动填写：抓取目标网站元数据并填入表单
+  const fetchMetaBtn = document.getElementById('fetch-meta-btn');
+  if (fetchMetaBtn) {
+    fetchMetaBtn.addEventListener('click', async () => {
+      const url = formSiteUrl ? formSiteUrl.value.trim() : '';
+      if (!isSafeURL(url)) {
+        showToast('请先填写有效的 https:// 网址', 'error');
+        return;
+      }
+
+      const originalHTML = fetchMetaBtn.innerHTML;
+      fetchMetaBtn.disabled = true;
+      fetchMetaBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg> 获取中…';
+
+      try {
+        const resp = await fetch(`/api/meta?url=${encodeURIComponent(url)}`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          showToast(`获取失败：${data.error || '请稍后重试'}`, 'error');
+          return;
+        }
+
+        if (data.title && formSiteName) formSiteName.value = data.title;
+        if (data.description) {
+          if (formSiteDesc) formSiteDesc.value = data.description.slice(0, 80);
+          if (formSiteDetail) formSiteDetail.value = data.description;
+        }
+        if (Array.isArray(data.keywords) && data.keywords.length > 0) {
+          const toAdd = data.keywords.filter(k => !currentEditingTags.includes(k));
+          if (toAdd.length > 0) {
+            currentEditingTags = [...currentEditingTags, ...toAdd].slice(0, 8);
+            renderInteractiveTags(false);
+          }
+        }
+
+        // 若图标仍是默认值则顺带获取 favicon
+        if (formSiteIcon && (formSiteIcon.value === '🌐' || !formSiteIcon.value.trim())) {
+          const domain = new URL(url).hostname;
+          const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+          formSiteIcon.value = faviconUrl;
+          updateFaviconPreview(faviconUrl);
+        }
+
+        showToast('信息已自动填写，请检查后保存', 'success');
+      } catch {
+        showToast('网络异常，请稍后重试', 'error');
+      } finally {
+        fetchMetaBtn.disabled = false;
+        fetchMetaBtn.innerHTML = originalHTML;
+      }
+    });
+  }
+
   // 侧边栏按钮切换功能逻辑
   if (sidebarWebsitesBtn) {
     sidebarWebsitesBtn.addEventListener('click', () => {
