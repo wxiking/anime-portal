@@ -1971,42 +1971,12 @@ body {
   }
 }
 
-/* ── 图标 Emoji 选择器 ── */
+/* ── 图标选择器（一行式：预览 + 输入 + 按钮） ── */
 .icon-picker-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.icon-emoji-input {
-  width: 72px !important;
-  font-size: 1.35rem;
-  text-align: center;
-  padding: 0.4rem 0.5rem !important;
-}
-.icon-preset-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-.icon-preset {
-  width: 34px;
-  height: 34px;
-  display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  font-size: 1.15rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--glass-border);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
-  user-select: none;
-  line-height: 1;
-}
-.icon-preset:hover {
-  background: rgba(255, 179, 198, 0.18);
-  border-color: rgba(255, 179, 198, 0.45);
-  transform: scale(1.15);
+  gap: 0.5rem;
 }
 /* 卡片 / 列表里渲染 Emoji 图标时的样式 */
 .icon-emoji-display {

@@ -642,7 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getSVGIcon(key) {
     if (isSafeURL(key)) {
-      return `<img src="${escapeHTML(key)}" width="22" height="22" style="object-fit:contain;border-radius:3px;" onerror="this.style.display='none'">`;
+      return `<img src="${escapeHTML(key)}" style="width:28px;height:28px;object-fit:contain;border-radius:4px;" onerror="this.style.display='none'">`;
     }
     if (iconSVGMap[key]) return iconSVGMap[key];
     const safe = escapeHTML(String(key || '🌐').slice(0, 8));
@@ -1367,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const formSiteUrl = document.getElementById('form-site-url');
   const formSiteCategory = document.getElementById('form-site-category');
   const formSiteIcon = document.getElementById('form-site-icon');
-  const faviconPreview = document.getElementById('favicon-preview');
+  const iconFormPreview = document.getElementById('icon-form-preview');
   const formSiteStatus = document.getElementById('form-site-status');
   const formSiteDesc = document.getElementById('form-site-desc');
   const formSiteDetail = document.getElementById('form-site-detail');
@@ -1455,23 +1455,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (editCloseBtn) editCloseBtn.addEventListener('click', closeAdminEditPanel);
 
-  document.querySelectorAll('.icon-preset').forEach(el => {
-    el.addEventListener('click', () => {
-      if (formSiteIcon) formSiteIcon.value = el.dataset.emoji;
-      updateFaviconPreview('');
-    });
-  });
-
-  // favicon 预览辅助函数（function 声明，对上方调用点自动提升）
+  // 图标预览辅助函数（function 声明可被上方 openAdminEditPanel 等调用）
   function updateFaviconPreview(iconVal) {
-    if (!faviconPreview) return;
-    if (isSafeURL(iconVal)) {
-      faviconPreview.src = iconVal;
-      faviconPreview.style.display = '';
-    } else {
-      faviconPreview.style.display = 'none';
-      faviconPreview.src = '';
-    }
+    if (!iconFormPreview) return;
+    iconFormPreview.innerHTML = getSVGIcon(iconVal || '🌐');
   }
 
   // 图标输入框实时同步预览
@@ -1493,6 +1480,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (formSiteIcon) formSiteIcon.value = faviconUrl;
       updateFaviconPreview(faviconUrl);
       showToast('图标已获取，保存后生效', 'success');
+    });
+  }
+
+  // 清除图标按钮
+  const clearFaviconBtn = document.getElementById('clear-favicon-btn');
+  if (clearFaviconBtn) {
+    clearFaviconBtn.addEventListener('click', () => {
+      if (formSiteIcon) formSiteIcon.value = '🌐';
+      updateFaviconPreview('🌐');
     });
   }
 
