@@ -222,9 +222,16 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="form-label">网站图标（输入或点击选择 Emoji）</label>
+              <label class="form-label">网站图标（Emoji / 自动获取网站 Favicon）</label>
               <div class="icon-picker-wrap">
-                <input type="text" id="form-site-icon" class="form-input icon-emoji-input" placeholder="🌐" maxlength="8">
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:0.6rem;">
+                  <input type="text" id="form-site-icon" class="form-input icon-emoji-input" placeholder="🌐">
+                  <img id="favicon-preview" src="" alt="图标预览" width="28" height="28" style="border-radius:6px;object-fit:contain;display:none;flex-shrink:0;background:rgba(255,255,255,0.08);padding:2px;">
+                  <button type="button" id="fetch-favicon-btn" class="btn-action btn-secondary" style="white-space:nowrap;padding:0.4rem 0.75rem;font-size:0.78rem;flex-shrink:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    自动获取图标
+                  </button>
+                </div>
                 <div class="icon-preset-grid">
                   <span class="icon-preset" data-emoji="🌐">🌐</span>
                   <span class="icon-preset" data-emoji="🔗">🔗</span>

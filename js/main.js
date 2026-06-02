@@ -641,6 +641,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function getSVGIcon(key) {
+    if (isSafeURL(key)) {
+      return `<img src="${escapeHTML(key)}" width="22" height="22" style="object-fit:contain;border-radius:3px;" onerror="this.style.display='none'">`;
+    }
     if (iconSVGMap[key]) return iconSVGMap[key];
     const safe = escapeHTML(String(key || '🌐').slice(0, 8));
     return `<span class="icon-emoji-display">${safe}</span>`;
@@ -1364,6 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const formSiteUrl = document.getElementById('form-site-url');
   const formSiteCategory = document.getElementById('form-site-category');
   const formSiteIcon = document.getElementById('form-site-icon');
+  const faviconPreview = document.getElementById('favicon-preview');
   const formSiteStatus = document.getElementById('form-site-status');
   const formSiteDesc = document.getElementById('form-site-desc');
   const formSiteDetail = document.getElementById('form-site-detail');
@@ -1381,6 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formSiteUrl.value = site.url;
     formSiteCategory.value = site.category;
     formSiteIcon.value = site.icon;
+    updateFaviconPreview(site.icon);
     formSiteStatus.value = site.status;
     formSiteDesc.value = site.description;
     formSiteDetail.value = site.detailedDescription;
@@ -1445,13 +1450,51 @@ document.addEventListener('DOMContentLoaded', () => {
     editSiteForm.reset();
     formSiteId.value = '';
     currentEditingTags = [];
+    updateFaviconPreview('');
   }
 
   if (editCloseBtn) editCloseBtn.addEventListener('click', closeAdminEditPanel);
 
   document.querySelectorAll('.icon-preset').forEach(el => {
-    el.addEventListener('click', () => { if (formSiteIcon) formSiteIcon.value = el.dataset.emoji; });
+    el.addEventListener('click', () => {
+      if (formSiteIcon) formSiteIcon.value = el.dataset.emoji;
+      updateFaviconPreview('');
+    });
   });
+
+  // favicon 预览辅助函数（function 声明，对上方调用点自动提升）
+  function updateFaviconPreview(iconVal) {
+    if (!faviconPreview) return;
+    if (isSafeURL(iconVal)) {
+      faviconPreview.src = iconVal;
+      faviconPreview.style.display = '';
+    } else {
+      faviconPreview.style.display = 'none';
+      faviconPreview.src = '';
+    }
+  }
+
+  // 图标输入框实时同步预览
+  if (formSiteIcon) {
+    formSiteIcon.addEventListener('input', () => updateFaviconPreview(formSiteIcon.value.trim()));
+  }
+
+  // 自动获取网站 favicon 按钮
+  const fetchFaviconBtn = document.getElementById('fetch-favicon-btn');
+  if (fetchFaviconBtn) {
+    fetchFaviconBtn.addEventListener('click', () => {
+      const url = formSiteUrl ? formSiteUrl.value.trim() : '';
+      if (!isSafeURL(url)) {
+        showToast('请先填写有效的 https:// 网址', 'error');
+        return;
+      }
+      const domain = new URL(url).hostname;
+      const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+      if (formSiteIcon) formSiteIcon.value = faviconUrl;
+      updateFaviconPreview(faviconUrl);
+      showToast('图标已获取，保存后生效', 'success');
+    });
+  }
 
   // 侧边栏按钮切换功能逻辑
   if (sidebarWebsitesBtn) {
@@ -1474,6 +1517,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formSiteUrl.value = '';
       formSiteCategory.value = categories.length > 0 ? categories[0].id : '';
       formSiteIcon.value = '🌐';
+      updateFaviconPreview('');
       formSiteStatus.value = 'online';
       formSiteDesc.value = '';
       formSiteDetail.value = '';
