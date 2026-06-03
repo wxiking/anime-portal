@@ -36,6 +36,20 @@ export async function onRequestGet({ request, env }) {
     if (target.protocol !== 'http:' && target.protocol !== 'https:') {
       return jsonResponse({ error: 'Only http/https URLs are supported' }, 400);
     }
+    // Block SSRF: reject private/loopback/link-local addresses
+    const hostname = target.hostname.toLowerCase();
+    const isPrivate =
+      hostname === 'localhost' ||
+      /^127\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname) ||
+      /^192\.168\./.test(hostname) ||
+      /^169\.254\./.test(hostname) ||
+      hostname === '[::1]' ||
+      hostname === '::1' ||
+      hostname.endsWith('.local') ||
+      hostname.endsWith('.internal');
+    if (isPrivate) return jsonResponse({ error: 'Private or internal URLs are not allowed' }, 400);
   } catch {
     return jsonResponse({ error: 'Invalid URL' }, 400);
   }

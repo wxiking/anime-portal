@@ -1472,7 +1472,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchFaviconBtn.addEventListener('click', () => {
       const url = formSiteUrl ? formSiteUrl.value.trim() : '';
       if (!isSafeURL(url)) {
-        showToast('请先填写有效的 https:// 网址', 'error');
+        showToast('请先填写有效的网址（http:// 或 https://）', 'error');
         return;
       }
       const domain = new URL(url).hostname;
@@ -1498,7 +1498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchMetaBtn.addEventListener('click', async () => {
       const url = formSiteUrl ? formSiteUrl.value.trim() : '';
       if (!isSafeURL(url)) {
-        showToast('请先填写有效的 https:// 网址', 'error');
+        showToast('请先填写有效的网址（http:// 或 https://）', 'error');
         return;
       }
 
